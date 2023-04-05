@@ -16,19 +16,19 @@
 pragma solidity =0.8.19;
 
 import "forge-std/Test.sol";
-import {PauseProxy} from "./PauseProxy.sol";
+import {SubProxy} from "./SubProxy.sol";
 
-contract PauseProxyTest is Test {
-    PauseProxy internal proxy = new PauseProxy();
+contract SubProxyTest is Test {
+    SubProxy internal proxy = new SubProxy();
     Target internal target = new Target();
 
-    function testProxyUsesDelegateCall() public {
+    function testExecUsesDelegateCall() public {
         bytes memory out = proxy.exec(address(target), abi.encodeWithSelector(Target.getSender.selector));
         address sender = abi.decode(out, (address));
         assertEq(sender, address(this), "msg.sender is not the original caller");
     }
 
-    function testProxyHandlesSentEther() public {
+    function testExecIsPayable() public {
         uint256 sentValue = 0.1 ether;
         bytes memory out = proxy.exec{value: sentValue}(
             address(target),
@@ -38,36 +38,37 @@ contract PauseProxyTest is Test {
         assertEq(receivedValue, sentValue, "msg.value is not the original provided");
     }
 
-    function testProxyForwardsArguments() public {
+    function testExecForwardsArguments() public {
         bytes memory sentArgs = "arbitrary args";
         bytes memory out = proxy.exec(address(target), abi.encodeWithSelector(Target.getArgs.selector, sentArgs));
         bytes memory receivedArgs = abi.decode(out, (bytes));
         assertEq(receivedArgs, sentArgs, "arguments have not been forwarded properly");
     }
 
-    function testRevertCallWithDefaultErrorString() public {
-        vm.expectRevert("PauseProxy/target-reverted");
+    function testRevertExec() public {
+        vm.expectRevert("SubProxy/delegatecall-error");
         proxy.exec(address(target), abi.encodeWithSelector(Target.revertWithoutMessage.selector));
     }
 
-    function testRevertCallBubblesUpOriginalReasonString() public {
-        vm.expectRevert("error-msg");
+    function testRevertExecWithMessage() public {
+        vm.expectRevert("SubProxy/delegatecall-error");
         proxy.exec(address(target), abi.encodeWithSelector(Target.revertWithMessage.selector));
     }
 
-    function testRevertCallBubblesUpOriginalCustomError() public {
-        vm.expectRevert(Target.Failed.selector);
+    function testRevertExecWithCustomError() public {
+        vm.expectRevert("SubProxy/delegatecall-error");
         proxy.exec(address(target), abi.encodeWithSelector(Target.revertWithCustomError.selector));
     }
 
-    function testRevertCallBubblesUpOriginalPanic() public {
-        // https://docs.soliditylang.org/en/latest/control-structures.html#panic-via-assert-and-error-via-require
-        vm.expectRevert("PauseProxy/target-panicked: 0x12");
+    function testRevertExecWithPanic() public {
+        vm.expectRevert("SubProxy/delegatecall-error");
         proxy.exec(address(target), abi.encodeWithSelector(Target.revertWithPanic.selector));
     }
 
-    function testReverOnNonAuthorizedExec() public {
-        vm.expectRevert("PauseProxy/not-authorized");
+    function testRevertExecWhenNotAuthorized() public {
+        assertEq(proxy.wards(address(0)), 0);
+
+        vm.expectRevert("SubProxy/not-authorized");
         vm.prank(address(0));
         proxy.exec(address(target), abi.encodeWithSelector(Target.getSender.selector));
     }
@@ -78,18 +79,23 @@ contract PauseProxyTest is Test {
         // --------------------
         vm.expectEmit(true, false, false, false);
         emit Rely(address(0));
-
         proxy.rely(address(0));
 
         assertEq(proxy.wards(address(0)), 1);
 
+        vm.prank(address(0));
+        proxy.exec(address(target), abi.encodeWithSelector(Target.getSender.selector));
+
         // --------------------
         vm.expectEmit(true, false, false, false);
         emit Deny(address(0));
-
         proxy.deny(address(0));
 
         assertEq(proxy.wards(address(0)), 0);
+
+        vm.prank(address(0));
+        vm.expectRevert("SubProxy/not-authorized");
+        proxy.exec(address(target), abi.encodeWithSelector(Target.getSender.selector));
     }
 
     event Rely(address indexed usr);

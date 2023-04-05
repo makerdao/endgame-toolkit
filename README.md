@@ -1,33 +1,78 @@
-# SubDAO Pause Proxy
+# Endgame Toolkit
 
-A SubDAO from [MakerDAO Endgame](https://endgame.makerdao.com/subdaos/overview) is a semi-independent and specialized
-DAO, with its own governance token, process and workforce.
+A set of components for the [SubDAO](https://endgame.makerdao.com/subdaos/overview) stack in the context of the
+[MakerDAO Endgame](https://endgame.makerdao.com/).
 
-The SubDAO Pause Proxy is the SubDAO level counter-party of the MakerDAO level
+<!-- vim-markdown-toc GFM -->
+
+- [Components](#components)
+  - [`SubProxy`](#subproxy)
+    - [Interface](#interface)
+      - [`rely(address usr)`](#relyaddress-usr)
+      - [`deny(address usr)`](#denyaddress-usr)
+      - [`exec(address target, bytes memory args) payable returns (bytes memory out)`](#execaddress-target-bytes-memory-args-payable-returns-bytes-memory-out)
+- [Contributing](#contributing)
+  - [Requirements](#requirements)
+  - [Install dependencies](#install-dependencies)
+  - [Run tests](#run-tests)
+
+<!-- vim-markdown-toc -->
+
+## Components
+
+### `SubProxy`
+
+The `SubProxy` is the SubDAO level counter-party of the MakerDAO level
 [`MCD_PAUSE_PROXY`](https://etherscan.io/address/0xbe8e3e3618f7474f8cb1d074a26affef007e98fb#code).
 
 The reason a Proxy is required is to isolate the context of execution for spells from the main governance contract to
-avoid attempts of exploits.
+avoid potential exploits messing with the original contract storage.
 
 This module is heavily inspired by the original
 [`DSPauseProxy`](https://github.com/makerdao/ds-pause/blob/5e798dd96bfaac978cd9fe3c0259b486e8afd213/src/pause.sol#L139-L154)
-contract, with some quality of life improvements:
+contract, with a few modifications:
 
 1. Instead of a single `owner`, it uses the now classic `wards`/`rely`/`deny` pattern from MCD.
-2. When the underlying contract call reverts, the original `DSPauseProxy` will revert with a not very informative
-   message `ds-pause-delegatecall-error`. This module improves on that by bubbling-up the underlying execution error.
+2. The `exec` function is `payable`.
 
-## Interface
+#### Interface
 
-### `rely(address usr)`
+##### `rely(address usr)`
 
 Grants `usr` access to execute calls through this contract.
 
-### `deny(address usr)`
+##### `deny(address usr)`
 
 Revokes `usr` access to execute calls through this contract.
 
-### `exec(address target, bytes memory args) returns (bytes memory out)`
+##### `exec(address target, bytes memory args) payable returns (bytes memory out)`
 
 Executes a calldata-encoded call `args` on `target` through `delegatecall`.  
 The caller must have been `rely`ed before.
+
+## Contributing
+
+### Requirements
+
+- [Foundry](https://github.com/foundry-rs/foundry)
+- [Node.js](https://nodejs.org/)
+- [Yarn 1.x](https://classic.yarnpkg.com/lang/en/)
+
+We use Foundry for all Solidity things and Node.js + Yarn to manage devtools, such as linting and formatting.
+
+### Install dependencies
+
+After cloning the repo, run:
+
+```bash
+# 1. Install solhint, prettier, husky and other tools
+yarn install
+# 2. Install Foundry dependencies
+forge update
+```
+
+### Run tests
+
+```bash
+forge test -vvv
+```

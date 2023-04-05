@@ -16,9 +16,9 @@
 pragma solidity =0.8.19;
 
 import "forge-std/Script.sol";
-import {PauseProxy} from "../src/PauseProxy.sol";
+import {SubProxy} from "../src/SubProxy.sol";
 
-contract DeployPauseProxy is Script {
+contract DeploySubProxy is Script {
     function run() public returns (address) {
         address changelog = vm.envAddress("CHANGELOG");
         address owner = ChangelogLike(changelog).getAddress("MCD_PAUSE_PROXY");
@@ -26,7 +26,7 @@ contract DeployPauseProxy is Script {
 
         vm.startBroadcast();
 
-        PauseProxy proxy = new PauseProxy();
+        SubProxy proxy = new SubProxy();
         // Rely the pause Proxy
         proxy.rely(owner);
         // Deny the deployer

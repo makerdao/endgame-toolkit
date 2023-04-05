@@ -3,7 +3,7 @@ set -eo pipefail
 
 source "${BASH_SOURCE%/*}/_common.sh"
 
-run-script() {
+run_script() {
 	normalize-env-vars
 
 	local PASSWORD="$(extract-password)"
@@ -12,15 +12,18 @@ run-script() {
 		PASSWORD_OPT=(--password "$PASSWORD")
 	fi
 
-	check-required-etherscan-api-key
+	check-required-etherscan-api-key "$@"
 
+	local RESPONSE=
 	# Log the command being issued, making sure not to expose the password
-	log "forge script --json --sender $ETH_FROM --keystores="$FOUNDRY_ETH_KEYSTORE_FILE" $(sed 's/ .*$/ [REDACTED]/' <<<"${PASSWORD_OPT[@]}")" $(printf ' %q' "$@")
-	# Currently `forge script` sends the logs to stdout instead of stderr.
+	log "forge script --json --sender "$FOUNDRY_ETH_FROM" --keystore "$FOUNDRY_ETH_KEYSTORE_FILE" $(sed 's/ .*$/ [REDACTED]/' <<<"${PASSWORD_OPT[@]}")" $(printf ' %q' "$@")
+	# Currently `forge create` sends the logs to stdout instead of stderr.
 	# This makes it hard to compose its output with other commands, so here we are:
 	# 1. Duplicating stdout to stderr through `tee`
 	# 2. Extracting only the address of the deployed contract to stdout
-	forge script --json --sender $ETH_FROM --keystores="$FOUNDRY_ETH_KEYSTORE_FILE" "${PASSWORD_OPT[@]}" "$@"
+	RESPONSE=$(forge script --json --sender "$FOUNDRY_ETH_FROM" --keystores "$FOUNDRY_ETH_KEYSTORE_FILE" "${PASSWORD_OPT[@]}" "$@" | tee >(cat 1>&2))
+
+	jq -Rr 'fromjson?' <<<"$RESPONSE"
 }
 
 check-required-etherscan-api-key() {
@@ -34,15 +37,20 @@ check-required-etherscan-api-key() {
 
 usage() {
 	cat <<MSG
-forge-script.sh [<src>:]<contract> [...options]
+forge-script.sh [<file>:]<contract> [ --fork-url RPC_URL --broadcast ] [ --sig <signature> ] [ --verify ]
 
 Examples:
+    # Simulate running the script
+    forge-script.sh MyContract
 
-    # simulate deployment
-    forge-script.sh script/DeployGoerli.s.sol:Goerli
+    # Simulate running the script in a fork
+    forge-script.sh MyContract --fork-url http://localhost:8545
 
-    # deploy
-    forge-script.sh script/DeployGoerli.s.sol:Goerli --broadcast
+    # Broadcast a transaction to the network
+    forge-script.sh MyContract --fork-url http://localhost:8545 --broadcast
+
+    # Call a different method in the contract
+    forge-script.sh MyContract --sig 'deploy()'
 MSG
 }
 
@@ -52,5 +60,5 @@ if [ "$0" = "$BASH_SOURCE" ]; then
 		exit 0
 	}
 
-	run-script "$@"
+	run_script "$@"
 fi

@@ -45,6 +45,33 @@ contract PauseProxyTest is Test {
         assertEq(receivedArgs, sentArgs, "arguments have not been forwarded properly");
     }
 
+    function testRevertCallWithDefaultErrorString() public {
+        vm.expectRevert("PauseProxy/target-reverted");
+        proxy.exec(address(target), abi.encodeWithSelector(Target.revertWithoutMessage.selector));
+    }
+
+    function testRevertCallBubblesUpOriginalReasonString() public {
+        vm.expectRevert("error-msg");
+        proxy.exec(address(target), abi.encodeWithSelector(Target.revertWithMessage.selector));
+    }
+
+    function testRevertCallBubblesUpOriginalCustomError() public {
+        vm.expectRevert(Target.Failed.selector);
+        proxy.exec(address(target), abi.encodeWithSelector(Target.revertWithCustomError.selector));
+    }
+
+    function testRevertCallBubblesUpOriginalPanic() public {
+        // https://docs.soliditylang.org/en/latest/control-structures.html#panic-via-assert-and-error-via-require
+        vm.expectRevert("PauseProxy/target-panicked: 0x12");
+        proxy.exec(address(target), abi.encodeWithSelector(Target.revertWithPanic.selector));
+    }
+
+    function testReverOnNonAuthorizedExec() public {
+        vm.expectRevert("PauseProxy/not-authorized");
+        vm.prank(address(0));
+        proxy.exec(address(target), abi.encodeWithSelector(Target.getSender.selector));
+    }
+
     function testRelyDeny() public {
         assertEq(proxy.wards(address(0)), 0);
 
@@ -80,5 +107,24 @@ contract Target {
 
     function getArgs(bytes calldata args) external pure returns (bytes memory) {
         return args;
+    }
+
+    function revertWithoutMessage() external pure {
+        revert();
+    }
+
+    function revertWithMessage() external pure {
+        revert("error-msg");
+    }
+
+    error Failed();
+
+    function revertWithCustomError() external pure {
+        revert Failed();
+    }
+
+    function revertWithPanic() external pure {
+        uint256 b = 0;
+        1 / b;
     }
 }

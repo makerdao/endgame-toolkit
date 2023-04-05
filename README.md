@@ -3,8 +3,6 @@
 A set of components for the [SubDAO](https://endgame.makerdao.com/subdaos/overview) stack in the context of the
 [MakerDAO Endgame](https://endgame.makerdao.com/).
 
-<!-- vim-markdown-toc GFM -->
-
 - [Components](#components)
   - [`SubProxy`](#subproxy)
     - [Interface](#interface)
@@ -15,8 +13,6 @@ A set of components for the [SubDAO](https://endgame.makerdao.com/subdaos/overvi
   - [Requirements](#requirements)
   - [Install dependencies](#install-dependencies)
   - [Run tests](#run-tests)
-
-<!-- vim-markdown-toc -->
 
 ## Components
 

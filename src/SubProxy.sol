@@ -27,7 +27,7 @@ contract SubProxy {
     mapping(address => uint256) public wards;
 
     /**
-     * @notice `usr` was granted oner access.
+     * @notice `usr` was granted owner access.
      * @param usr The user address.
      */
     event Rely(address indexed usr);

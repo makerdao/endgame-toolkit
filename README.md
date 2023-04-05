@@ -9,6 +9,14 @@ The SubDAO Pause Proxy is the SubDAO level counter-party of the MakerDAO level
 The reason a Proxy is required is to isolate the context of execution for spells from the main governance contract to
 avoid attempts of exploits.
 
+This module is heavily inspired by the original
+[`DSPauseProxy`](https://github.com/makerdao/ds-pause/blob/5e798dd96bfaac978cd9fe3c0259b486e8afd213/src/pause.sol#L139-L154)
+contract, with some quality of life improvements:
+
+1. Instead of a single `owner`, it uses the now classic `wards`/`rely`/`deny` pattern from MCD.
+2. When the underlying contract call reverts, the original `DSPauseProxy` will revert with a not very informative
+   message `ds-pause-delegatecall-error`. This module improves on that by bubbling-up the underlying execution error.
+
 ## Interface
 
 ### `rely(address usr)`
@@ -21,4 +29,5 @@ Revokes `usr` access to execute calls through this contract.
 
 ### `exec(address target, bytes memory args) returns (bytes memory out)`
 
-Executes a calldata-encoded call `args` on `target` through `delegatecall`.
+Executes a calldata-encoded call `args` on `target` through `delegatecall`.  
+The caller must have been `rely`ed before.

@@ -15,6 +15,13 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity =0.8.19;
 
+/**
+ * @title SubProxy: the SubDAO-level `PauseProxy`.
+ * @dev This proxy uses `delegatecall` to execute calls from context isolated from the main governance contract.
+ * Contracts that must be controlled by SubDAO governance must authorize the `SubProxy` contract instead of the
+ * governance contract itself.
+ * @author @amusingaxl
+ */
 contract SubProxy {
     /// @notice Addresses with owner access on this contract. `wards[usr]`
     mapping(address => uint256) public wards;
@@ -60,7 +67,6 @@ contract SubProxy {
 
     /**
      * @notice Executes a calldata-encoded call `args` in the context of `target`.
-     * @dev This function attempts to bubble-up potential execution errors.
      * @param target The target contract.
      * @param args The calldata-encoded call.
      * @return out The result of the execution.

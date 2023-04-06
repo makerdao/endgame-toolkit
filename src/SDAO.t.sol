@@ -15,14 +15,14 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity =0.8.19;
 
-import {Test} from "forge-std/Test.sol";
+import {DssTest} from "dss-test/DssTest.sol";
 import {SDAO} from "./SDAO.sol";
 
 /**
  * @dev Adapted from Solmate ERC20 test suite:
  * https://github.com/transmissions11/solmate/blob/2001af43aedb46fdc2335d2a7714fb2dae7cfcd1/src/test/ERC20.t.sol
  */
-contract SDAOTest is Test {
+contract SDAOTest is DssTest {
     SDAO token;
 
     bytes32 constant PERMIT_TYPEHASH =
@@ -463,7 +463,7 @@ contract SDAOTest is Test {
     }
 }
 
-contract SDAOInvariants is Test {
+contract SDAOInvariants is DssTest {
     BalanceSum balanceSum;
     SDAO token;
 

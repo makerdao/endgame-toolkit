@@ -15,10 +15,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity =0.8.19;
 
-import {Test} from "forge-std/Test.sol";
+import {DssTest} from "dss-test/DssTest.sol";
 import {SubProxy} from "./SubProxy.sol";
 
-contract SubProxyTest is Test {
+contract SubProxyTest is DssTest {
     SubProxy internal proxy = new SubProxy();
     Target internal target = new Target();
 
@@ -97,9 +97,6 @@ contract SubProxyTest is Test {
         vm.expectRevert("SubProxy/not-authorized");
         proxy.exec(address(target), abi.encodeWithSelector(Target.getSender.selector));
     }
-
-    event Rely(address indexed usr);
-    event Deny(address indexed usr);
 }
 
 contract Target {

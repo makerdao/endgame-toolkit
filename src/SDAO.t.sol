@@ -103,7 +103,6 @@ contract SDAOTest is Test {
     function testPermit() public {
         uint256 privateKey = 0xBEEF;
         address owner = vm.addr(privateKey);
-
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             privateKey,
             keccak256(
@@ -190,7 +189,6 @@ contract SDAOTest is Test {
         uint256 oldTimestamp = block.timestamp;
         uint256 privateKey = 0xBEEF;
         address owner = vm.addr(privateKey);
-
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             privateKey,
             keccak256(

@@ -49,6 +49,7 @@ contract SDAOTest is Test {
         token.mint(address(0xBEEF), 1e18);
         vm.prank(address(0xBEEF));
         token.approve(address(this), type(uint256).max);
+
         token.burn(address(0xBEEF), 0.9e18);
 
         assertEq(token.totalSupply(), 1e18 - 0.9e18);
@@ -73,34 +74,28 @@ contract SDAOTest is Test {
 
     function testTransferFrom() public {
         address from = address(0xABCD);
-
         token.mint(from, 1e18);
-
         vm.prank(from);
         token.approve(address(this), 1e18);
 
         assertTrue(token.transferFrom(from, address(0xBEEF), 1e18));
+
         assertEq(token.totalSupply(), 1e18);
-
         assertEq(token.allowance(from, address(this)), 0);
-
         assertEq(token.balanceOf(from), 0);
         assertEq(token.balanceOf(address(0xBEEF)), 1e18);
     }
 
     function testInfiniteApproveTransferFrom() public {
         address from = address(0xABCD);
-
         token.mint(from, 1e18);
-
         vm.prank(from);
         token.approve(address(this), type(uint256).max);
 
         assertTrue(token.transferFrom(from, address(0xBEEF), 1e18));
+
         assertEq(token.totalSupply(), 1e18);
-
         assertEq(token.allowance(from, address(this)), type(uint256).max);
-
         assertEq(token.balanceOf(from), 0);
         assertEq(token.balanceOf(address(0xBEEF)), 1e18);
     }
@@ -115,7 +110,9 @@ contract SDAOTest is Test {
                 abi.encodePacked(
                     "\x19\x01",
                     token.DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(PERMIT_TYPEHASH, owner, address(0xCAFE), 1e18, 0, block.timestamp))
+                    keccak256(
+                        abi.encode(PERMIT_TYPEHASH, owner, address(0xCAFE), 1e18, token.nonces(owner), block.timestamp)
+                    )
                 )
             )
         );
@@ -126,37 +123,36 @@ contract SDAOTest is Test {
         assertEq(token.nonces(owner), 1);
     }
 
-    function testFailTransferInsufficientBalance() public {
+    function testRevertTransferInsufficientBalance() public {
         token.mint(address(this), 0.9e18);
+
+        vm.expectRevert("SDAO/insufficient-balance");
         token.transfer(address(0xBEEF), 1e18);
     }
 
-    function testFailTransferFromInsufficientAllowance() public {
+    function testRevertTransferFromInsufficientAllowance() public {
         address from = address(0xABCD);
-
         token.mint(from, 1e18);
-
         vm.prank(from);
         token.approve(address(this), 0.9e18);
 
+        vm.expectRevert("SDAO/insufficient-allowance");
         token.transferFrom(from, address(0xBEEF), 1e18);
     }
 
-    function testFailTransferFromInsufficientBalance() public {
+    function testRevertTransferFromInsufficientBalance() public {
         address from = address(0xABCD);
-
         token.mint(from, 0.9e18);
-
         vm.prank(from);
         token.approve(address(this), 1e18);
 
+        vm.expectRevert("SDAO/insufficient-balance");
         token.transferFrom(from, address(0xBEEF), 1e18);
     }
 
-    function testFailPermitBadNonce() public {
+    function testRevertPermitBadNonce() public {
         uint256 privateKey = 0xBEEF;
         address owner = vm.addr(privateKey);
-
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             privateKey,
             keccak256(
@@ -168,13 +164,13 @@ contract SDAOTest is Test {
             )
         );
 
+        vm.expectRevert("SDAO/invalid-permit");
         token.permit(owner, address(0xCAFE), 1e18, block.timestamp, v, r, s);
     }
 
-    function testFailPermitBadDeadline() public {
+    function testRevertPermitBadDeadline() public {
         uint256 privateKey = 0xBEEF;
         address owner = vm.addr(privateKey);
-
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             privateKey,
             keccak256(
@@ -186,10 +182,11 @@ contract SDAOTest is Test {
             )
         );
 
+        vm.expectRevert("SDAO/invalid-permit");
         token.permit(owner, address(0xCAFE), 1e18, block.timestamp + 1, v, r, s);
     }
 
-    function testFailPermitPastDeadline() public {
+    function testRevertPermitPastDeadline() public {
         uint256 oldTimestamp = block.timestamp;
         uint256 privateKey = 0xBEEF;
         address owner = vm.addr(privateKey);
@@ -206,13 +203,13 @@ contract SDAOTest is Test {
         );
 
         vm.warp(block.timestamp + 1);
+        vm.expectRevert("SDAO/permit-expired");
         token.permit(owner, address(0xCAFE), 1e18, oldTimestamp, v, r, s);
     }
 
-    function testFailPermitReplay() public {
+    function testRevertPermitReplay() public {
         uint256 privateKey = 0xBEEF;
         address owner = vm.addr(privateKey);
-
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             privateKey,
             keccak256(
@@ -223,19 +220,20 @@ contract SDAOTest is Test {
                 )
             )
         );
-
         token.permit(owner, address(0xCAFE), 1e18, block.timestamp, v, r, s);
+
+        vm.expectRevert("SDAO/invalid-permit");
         token.permit(owner, address(0xCAFE), 1e18, block.timestamp, v, r, s);
     }
 
-    function testMetadata(string calldata name, string calldata symbol) public {
+    function testMetadataFuzz(string calldata name, string calldata symbol) public {
         SDAO tkn = new SDAO(name, symbol);
         assertEq(tkn.name(), name);
         assertEq(tkn.symbol(), symbol);
         assertEq(tkn.decimals(), 18);
     }
 
-    function testMint(address to, uint256 amount) public {
+    function testMintFuzz(address to, uint256 amount) public {
         vm.assume(to != address(0) && to != address(token));
 
         token.mint(to, amount);
@@ -244,22 +242,21 @@ contract SDAOTest is Test {
         assertEq(token.balanceOf(to), amount);
     }
 
-    function testBurn(address from, uint256 mintAmount, uint256 burnAmount) public {
+    function testBurnFuzz(address from, uint256 mintAmount, uint256 burnAmount) public {
         vm.assume(from != address(0) && from != address(token));
-
         burnAmount = bound(burnAmount, 0, mintAmount);
 
         token.mint(from, mintAmount);
-
         vm.prank(from);
         token.approve(address(this), type(uint256).max);
+
         token.burn(from, burnAmount);
 
         assertEq(token.totalSupply(), mintAmount - burnAmount);
         assertEq(token.balanceOf(from), mintAmount - burnAmount);
     }
 
-    function testApprove(address to, uint256 amount) public {
+    function testApproveFuzz(address to, uint256 amount) public {
         vm.assume(to != address(0) && to != address(token));
 
         assertTrue(token.approve(to, amount));
@@ -267,14 +264,14 @@ contract SDAOTest is Test {
         assertEq(token.allowance(address(this), to), amount);
     }
 
-    function testTransfer(address to, uint256 amount) public {
+    function testTransferFuzz(address to, uint256 amount) public {
         vm.assume(to != address(0) && to != address(token));
 
         token.mint(address(this), amount);
 
         assertTrue(token.transfer(to, amount));
-        assertEq(token.totalSupply(), amount);
 
+        assertEq(token.totalSupply(), amount);
         if (address(this) == to) {
             assertEq(token.balanceOf(address(this)), amount);
         } else {
@@ -283,23 +280,21 @@ contract SDAOTest is Test {
         }
     }
 
-    function testTransferFrom(address to, uint256 approval, uint256 amount) public {
+    function testTransferFromFuzz(address to, uint256 allowance, uint256 amount) public {
         vm.assume(to != address(0) && to != address(token));
-
-        amount = bound(amount, 0, approval);
+        amount = bound(amount, 0, allowance);
 
         address from = address(0xABCD);
-
         token.mint(from, amount);
-
         vm.prank(from);
-        token.approve(address(this), approval);
+        token.approve(address(this), allowance);
 
         assertTrue(token.transferFrom(from, to, amount));
+
         assertEq(token.totalSupply(), amount);
 
-        uint256 app = from == address(this) || approval == type(uint256).max ? approval : approval - amount;
-        assertEq(token.allowance(from, address(this)), app);
+        uint256 newAllowance = from == address(this) || allowance == type(uint256).max ? allowance : allowance - amount;
+        assertEq(token.allowance(from, address(this)), newAllowance);
 
         if (from == to) {
             assertEq(token.balanceOf(from), amount);
@@ -309,13 +304,11 @@ contract SDAOTest is Test {
         }
     }
 
-    function testPermit(uint248 privKey, address to, uint256 amount, uint256 deadline) public {
-        uint256 privateKey = privKey;
-        if (deadline < block.timestamp) deadline = block.timestamp;
-        if (privateKey == 0) privateKey = 1;
+    function testPermitFuzz(uint248 privateKey, address to, uint256 amount, uint256 deadline) public {
+        deadline = bound(deadline, block.timestamp, block.timestamp + type(uint80).max);
+        privateKey = uint248(bound(privateKey, 1, type(uint248).max));
 
         address owner = vm.addr(privateKey);
-
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             privateKey,
             keccak256(
@@ -333,59 +326,68 @@ contract SDAOTest is Test {
         assertEq(token.nonces(owner), 1);
     }
 
-    function testFailBurnInsufficientBalance(address to, uint256 mintAmount, uint256 burnAmount) public {
+    function testRevertBurnInsufficientBalanceFuzz(address to, uint256 mintAmount, uint256 burnAmount) public {
+        vm.assume(to != address(0) && to != address(token));
+        mintAmount = bound(mintAmount, 0, type(uint256).max - 1);
         burnAmount = bound(burnAmount, mintAmount + 1, type(uint256).max);
 
         token.mint(to, mintAmount);
+
+        vm.expectRevert("SDAO/insufficient-balance");
         token.burn(to, burnAmount);
     }
 
-    function testFailTransferInsufficientBalance(address to, uint256 mintAmount, uint256 sendAmount) public {
+    function testRevertTransferInsufficientBalanceFuzz(address to, uint256 mintAmount, uint256 sendAmount) public {
+        vm.assume(to != address(0) && to != address(token));
+        mintAmount = bound(mintAmount, 0, type(uint256).max - 1);
         sendAmount = bound(sendAmount, mintAmount + 1, type(uint256).max);
 
         token.mint(address(this), mintAmount);
+
+        vm.expectRevert("SDAO/insufficient-balance");
         token.transfer(to, sendAmount);
     }
 
-    function testFailTransferFromInsufficientAllowance(address to, uint256 approval, uint256 amount) public {
-        amount = bound(amount, approval + 1, type(uint256).max);
+    function testRevertTransferFromInsufficientAllowanceFuzz(address to, uint256 allowance, uint256 amount) public {
+        vm.assume(to != address(0) && to != address(token));
+        allowance = bound(allowance, 0, type(uint256).max - 1);
+        amount = bound(amount, allowance + 1, type(uint256).max);
 
         address from = address(0xABCD);
-
         token.mint(from, amount);
-
         vm.prank(from);
-        token.approve(address(this), approval);
+        token.approve(address(this), allowance);
 
+        vm.expectRevert("SDAO/insufficient-allowance");
         token.transferFrom(from, to, amount);
     }
 
-    function testFailTransferFromInsufficientBalance(address to, uint256 mintAmount, uint256 sendAmount) public {
+    function testRevertTransferFromInsufficientBalanceFuzz(address to, uint256 mintAmount, uint256 sendAmount) public {
+        vm.assume(to != address(0) && to != address(token));
+        mintAmount = bound(mintAmount, 0, type(uint256).max - 1);
         sendAmount = bound(sendAmount, mintAmount + 1, type(uint256).max);
 
         address from = address(0xABCD);
-
         token.mint(from, mintAmount);
-
         vm.prank(from);
         token.approve(address(this), sendAmount);
 
+        vm.expectRevert("SDAO/insufficient-balance");
         token.transferFrom(from, to, sendAmount);
     }
 
-    function testFailPermitBadNonce(
-        uint256 privateKey,
+    function testRevertPermitBadNonceFuzz(
+        uint248 privateKey,
         address to,
         uint256 amount,
         uint256 deadline,
         uint256 nonce
     ) public {
-        if (deadline < block.timestamp) deadline = block.timestamp;
-        if (privateKey == 0) privateKey = 1;
-        if (nonce == 0) nonce = 1;
+        deadline = bound(deadline, block.timestamp, block.timestamp + type(uint80).max);
+        privateKey = uint248(bound(privateKey, 1, type(uint248).max));
+        nonce = bound(nonce, 1, type(uint256).max - 1);
 
         address owner = vm.addr(privateKey);
-
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             privateKey,
             keccak256(
@@ -397,15 +399,15 @@ contract SDAOTest is Test {
             )
         );
 
+        vm.expectRevert("SDAO/invalid-permit");
         token.permit(owner, to, amount, deadline, v, r, s);
     }
 
-    function testFailPermitBadDeadline(uint256 privateKey, address to, uint256 amount, uint256 deadline) public {
-        if (deadline < block.timestamp) deadline = block.timestamp;
-        if (privateKey == 0) privateKey = 1;
+    function testRevertPermitBadDeadlineFuzz(uint248 privateKey, address to, uint256 amount, uint256 deadline) public {
+        deadline = bound(deadline, block.timestamp, block.timestamp + type(uint80).max);
+        privateKey = uint248(bound(privateKey, 1, type(uint248).max));
 
         address owner = vm.addr(privateKey);
-
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             privateKey,
             keccak256(
@@ -417,15 +419,15 @@ contract SDAOTest is Test {
             )
         );
 
+        vm.expectRevert("SDAO/invalid-permit");
         token.permit(owner, to, amount, deadline + 1, v, r, s);
     }
 
-    function testFailPermitPastDeadline(uint256 privateKey, address to, uint256 amount, uint256 deadline) public {
+    function testRevertPermitPastDeadlineFuzz(uint248 privateKey, address to, uint256 amount, uint256 deadline) public {
         deadline = bound(deadline, 0, block.timestamp - 1);
-        if (privateKey == 0) privateKey = 1;
+        privateKey = uint248(bound(privateKey, 1, type(uint248).max));
 
         address owner = vm.addr(privateKey);
-
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             privateKey,
             keccak256(
@@ -437,15 +439,15 @@ contract SDAOTest is Test {
             )
         );
 
+        vm.expectRevert("SDAO/permit-expired");
         token.permit(owner, to, amount, deadline, v, r, s);
     }
 
-    function testFailPermitReplay(uint256 privateKey, address to, uint256 amount, uint256 deadline) public {
-        if (deadline < block.timestamp) deadline = block.timestamp;
-        if (privateKey == 0) privateKey = 1;
+    function testRevertPermitReplayFuzz(uint248 privateKey, address to, uint256 amount, uint256 deadline) public {
+        deadline = bound(deadline, block.timestamp, block.timestamp + type(uint80).max);
+        privateKey = uint248(bound(privateKey, 1, type(uint248).max));
 
         address owner = vm.addr(privateKey);
-
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             privateKey,
             keccak256(
@@ -456,8 +458,9 @@ contract SDAOTest is Test {
                 )
             )
         );
-
         token.permit(owner, to, amount, deadline, v, r, s);
+
+        vm.expectRevert("SDAO/invalid-permit");
         token.permit(owner, to, amount, deadline, v, r, s);
     }
 }

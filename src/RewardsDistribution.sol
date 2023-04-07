@@ -211,6 +211,7 @@ contract RewardsDistribution {
      */
     function distribute() external {
         require(vestId != INVALID_VEST_ID, "RewardsDistribution/invalid-vest-id");
+        require(vest.unpaid(vestId) > 0, "RewardsDistribution/empty-vest");
 
         uint256 when = block.timestamp;
         uint256 prev = stakingRewards.lastUpdateTime();
@@ -219,6 +220,7 @@ contract RewardsDistribution {
         uint256 clf = dssVest.clf(vestId);
 
         uint256 amount = calc.getAmount(when, prev, tot, fin, clf);
+        require(amount > 0, "RewardsDistribution/no-pending-amount");
 
         dssVest.vest(vestId, amount);
         stakingRewards.notifyRewardAmount(amount);

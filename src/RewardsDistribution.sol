@@ -211,7 +211,7 @@ contract RewardsDistribution {
      */
     function distribute() external {
         require(vestId != INVALID_VEST_ID, "RewardsDistribution/invalid-vest-id");
-        require(vest.unpaid(vestId) > 0, "RewardsDistribution/empty-vest");
+        require(dssVest.unpaid(vestId) > 0, "RewardsDistribution/empty-vest");
 
         uint256 when = block.timestamp;
         uint256 prev = stakingRewards.lastUpdateTime();

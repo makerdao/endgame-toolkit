@@ -36,11 +36,11 @@ contract SDAO {
     string public name;
     /// @dev The symbol of the token.
     string public symbol;
-    /// @dev The number of decimal places for the token.
-    string public constant version = "1";
-    /// @notice Returns the amount of tokens in existence.
-    uint8 public constant decimals = 18;
     /// @dev The version of the token.
+    string public constant version = "1";
+    /// @dev The number of decimal places for the token.
+    uint8 public constant decimals = 18;
+    /// @notice Returns the amount of tokens in existence.
     uint256 public totalSupply;
 
     /// @notice Returns the amount of tokens owned by `account`. balanceOf[account]

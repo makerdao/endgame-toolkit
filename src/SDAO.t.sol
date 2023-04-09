@@ -461,6 +461,22 @@ contract SDAOTest is DssTest {
         vm.expectRevert("SDAO/invalid-permit");
         token.permit(owner, to, amount, deadline, v, r, s);
     }
+
+    function testAuth() public {
+        checkAuth(address(token), "SDAO");
+    }
+
+    function testModifiers(address sender) public {
+        vm.assume(sender != address(this));
+
+        bytes4[] memory authedMethods = new bytes4[](3);
+        authedMethods[0] = SDAO.rely.selector;
+        authedMethods[1] = SDAO.deny.selector;
+        authedMethods[2] = SDAO.mint.selector;
+
+        vm.startPrank(sender);
+        checkModifier(address(token), "SDAO/not-authorized", authedMethods);
+    }
 }
 
 contract SDAOInvariants is DssTest {

@@ -65,37 +65,20 @@ contract SubProxyTest is DssTest {
         proxy.exec(address(target), abi.encodeWithSelector(Target.revertWithPanic.selector));
     }
 
-    function testRevertExecWhenNotAuthorized() public {
-        assertEq(proxy.wards(address(0)), 0);
-
-        vm.expectRevert("SubProxy/not-authorized");
-        vm.prank(address(0));
-        proxy.exec(address(target), abi.encodeWithSelector(Target.getSender.selector));
+    function testAuth() public {
+        checkAuth(address(proxy), "SubProxy");
     }
 
-    function testRelyDeny() public {
-        assertEq(proxy.wards(address(0)), 0);
+    function testModifiers(address sender) public {
+        vm.assume(sender != address(this));
 
-        // --------------------
-        vm.expectEmit(true, false, false, false);
-        emit Rely(address(0));
-        proxy.rely(address(0));
+        bytes4[] memory authedMethods = new bytes4[](3);
+        authedMethods[0] = SubProxy.rely.selector;
+        authedMethods[1] = SubProxy.deny.selector;
+        authedMethods[2] = SubProxy.exec.selector;
 
-        assertEq(proxy.wards(address(0)), 1);
-
-        vm.prank(address(0));
-        proxy.exec(address(target), abi.encodeWithSelector(Target.getSender.selector));
-
-        // --------------------
-        vm.expectEmit(true, false, false, false);
-        emit Deny(address(0));
-        proxy.deny(address(0));
-
-        assertEq(proxy.wards(address(0)), 0);
-
-        vm.prank(address(0));
-        vm.expectRevert("SubProxy/not-authorized");
-        proxy.exec(address(target), abi.encodeWithSelector(Target.getSender.selector));
+        vm.startPrank(sender);
+        checkModifier(address(proxy), "SubProxy/not-authorized", authedMethods);
     }
 }
 

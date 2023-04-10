@@ -29,9 +29,9 @@ jobs:
         env:
           FOUNDRY_PROFILE: 0_6_x
         run: |
-          export FOUNDRY_PROFILE=0_6_x
           forge --version
-          forge build --sizes
+          export FOUNDRY_PROFILE=0_6_x
+          FOUNDRY_PROFILE=0_6_x forge build --sizes
         id: build_0_6_x
 
       - name: Run Forge build

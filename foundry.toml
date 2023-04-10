@@ -2,7 +2,7 @@
 src = 'src'
 out = 'out'
 libs = ['lib']
-compiler_version = '0.8.19'
+solc_version = '0.8.19'
 optimizer = false
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
@@ -16,5 +16,5 @@ out = 'out'
 # If the library is compatible with all versions,
 # you can install it with the default profile.
 libs = ['lib-0_6_x', 'lib']
-compiler_version = '0.6.12'
+solc_version = '0.6.12'
 optimizer = false

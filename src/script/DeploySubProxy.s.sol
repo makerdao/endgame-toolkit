@@ -16,7 +16,7 @@
 pragma solidity =0.8.19;
 
 import "forge-std/Script.sol";
-import {SubProxy} from "../src/SubProxy.sol";
+import {SubProxy} from "../SubProxy.sol";
 
 contract DeploySubProxy is Script {
     function run() public returns (address) {

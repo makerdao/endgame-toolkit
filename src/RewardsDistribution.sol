@@ -16,49 +16,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity =0.8.19;
 
+import {DssVestWithGemLike} from "./interfaces/DssVestWithGemLike.sol";
+import {StakingRewardsLike} from "./interfaces/StakingRewardsLike.sol";
 import {DistributionCalc} from "./DistributionCalc.sol";
-
-interface StakingRewardsLike {
-    function rewardsToken() external view returns (address);
-
-    function lastUpdateTime() external view returns (uint256);
-
-    function rewardsDuration() external view returns (uint256);
-
-    function notifyRewardAmount(uint256 amt) external;
-}
-
-interface DssVestWithGemLike {
-    function valid(uint256 _id) external view returns (bool);
-
-    function usr(uint256 id) external view returns (address);
-
-    function bgn(uint256 id) external view returns (uint256);
-
-    function clf(uint256 id) external view returns (uint256);
-
-    function fin(uint256 id) external view returns (uint256);
-
-    function mgr(uint256 id) external view returns (address);
-
-    function res(uint256 id) external view returns (uint256);
-
-    function tot(uint256 id) external view returns (uint256);
-
-    function rxd(uint256 id) external view returns (uint256);
-
-    function accrued(uint256 id) external view returns (uint256);
-
-    function unpaid(uint256 _id) external view returns (uint256);
-
-    // @dev This function is not part of the DssVest interface, it's only present in the concrete implementations
-    // DssVestMintable and DssVestTransferable.
-    function gem() external view returns (address);
-
-    function vest(uint256 id) external;
-
-    function vest(uint256 id, uint256 _maxAmt) external;
-}
 
 contract RewardsDistribution {
     /// @notice Addresses with owner access on this contract. `wards[usr]`
@@ -72,8 +32,8 @@ contract RewardsDistribution {
     /// @notice Distribution calculation strategy.
     DistributionCalc public calc;
 
-    /// @dev Vest IDs are sequential. Realistically a DssVest instance will never 2**256 - 1 vests created.
-    uint256 internal constant INVALID_VEST_ID = type(uint256).max;
+    /// @dev Vest IDs are sequential, but they are incremented before usage, meaning `0` is not a valid vest ID.
+    uint256 internal constant INVALID_VEST_ID = 0;
     /// @notice The vest ID managed by this contract.
     /// @dev It is initialized to an invalid value to prevent calls before the vest ID being set.
     /// The reason this is not a required constructor parameter is that there is a circular dependency
@@ -107,6 +67,16 @@ contract RewardsDistribution {
      * @param amount The total tokens in the current distribution.
      */
     event Distribute(uint256 amount);
+
+    /**
+     * @notice Returns the max between `a` and `b`.
+     * @param a The first number.
+     * @param a The seconde number.
+     * @return The greater number.
+     */
+    function _max(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a > b ? a : b;
+    }
 
     modifier auth() {
         require(wards[msg.sender] == 1, "RewardsDistribution/not-authorized");
@@ -208,16 +178,21 @@ contract RewardsDistribution {
 
     /**
      * @notice Distributes the amount of rewards due since the last distribution.
+     * @dev The amount calculation is delegated to `calc`.
+     *  - If the returned value is `0`, the distribution will fail.
+     *  - If the returned value is greater than the current unpaid vested amount,
+     *    the distribution will be capped to the latter.
      */
     function distribute() external {
         require(vestId != INVALID_VEST_ID, "RewardsDistribution/invalid-vest-id");
         require(dssVest.unpaid(vestId) > 0, "RewardsDistribution/empty-vest");
 
         uint256 when = block.timestamp;
-        uint256 prev = stakingRewards.lastUpdateTime();
         uint256 tot = dssVest.tot(vestId);
         uint256 fin = dssVest.fin(vestId);
         uint256 clf = dssVest.clf(vestId);
+        // If this is the 1st distribution, lastUpdateTime would not have been updated.
+        uint256 prev = _max(clf, stakingRewards.lastUpdateTime());
 
         uint256 amount = calc.getAmount(when, prev, tot, fin, clf);
         require(amount > 0, "RewardsDistribution/no-pending-amount");

@@ -4,4 +4,17 @@ out = 'out'
 libs = ['lib']
 compiler_version = '0.8.19'
 optimizer = false
+
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
+[profile.0_6_x]
+# `src` must be different fot it to work.
+# We also recommend putting all Solidity test files and scripts inside `src*/`.
+src = 'src-0_6_x'
+out = 'out'
+# The order matters! When using `forge install` with FOUNDRY_PROFILE=0_6_x,
+# it will use the first directory as the installation path.
+# If the library is compatible with all versions,
+# you can install it with the default profile.
+libs = ['lib-0_6_x', 'lib']
+optimizer = false
+compiler_version = '0.6.12'

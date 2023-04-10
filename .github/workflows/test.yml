@@ -25,21 +25,14 @@ jobs:
         with:
           version: nightly
 
-      - name: Install Deps
-        run: |
-          forge --version
-          forge install
-        id: install
-
       - name: Run Forge build (solc 0.6.x)
         env:
           FOUNDRY_PROFILE: 0_6_x
         run: |
-          export FOUNDRY_PROFILE=0_6_x
-          FOUNDRY_PROFILE=0_6_x forge build --sizes
+          forge build --sizes
         id: build_0_6_x
 
-      - name: Run Forge build
+      - name: Run Forge build (default)
         run: |
           forge build --sizes
         id: build

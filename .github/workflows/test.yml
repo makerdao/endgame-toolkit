@@ -25,6 +25,14 @@ jobs:
         with:
           version: nightly
 
+      - name: Run Forge build (solc 0.6.x)
+        env:
+          FOUNDRY_PROFILE: 0_6_x
+        run: |
+          forge --version
+          forge build --sizes
+
+        id: build
       - name: Run Forge build
         run: |
           forge --version

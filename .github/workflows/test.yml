@@ -25,11 +25,11 @@ jobs:
         with:
           version: nightly
 
-      - name: Update Deps
+      - name: Install Deps
         run: |
           forge --version
-          forge update
-        id: update
+          forge install
+        id: install
 
       - name: Run Forge build (solc 0.6.x)
         env:

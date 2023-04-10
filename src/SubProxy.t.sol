@@ -15,10 +15,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity =0.8.19;
 
-import {Test} from "forge-std/Test.sol";
+import {DssTest} from "dss-test/DssTest.sol";
 import {SubProxy} from "./SubProxy.sol";
 
-contract SubProxyTest is Test {
+contract SubProxyTest is DssTest {
     SubProxy internal proxy = new SubProxy();
     Target internal target = new Target();
 
@@ -65,41 +65,19 @@ contract SubProxyTest is Test {
         proxy.exec(address(target), abi.encodeWithSelector(Target.revertWithPanic.selector));
     }
 
-    function testRevertExecWhenNotAuthorized() public {
-        assertEq(proxy.wards(address(0)), 0);
-
-        vm.expectRevert("SubProxy/not-authorized");
-        vm.prank(address(0));
-        proxy.exec(address(target), abi.encodeWithSelector(Target.getSender.selector));
+    function testAuth() public {
+        checkAuth(address(proxy), "SubProxy");
     }
 
-    function testRelyDeny() public {
-        assertEq(proxy.wards(address(0)), 0);
+    function testModifiers(address sender) public {
+        vm.assume(sender != address(this));
 
-        // --------------------
-        vm.expectEmit(true, false, false, false);
-        emit Rely(address(0));
-        proxy.rely(address(0));
+        bytes4[] memory authedMethods = new bytes4[](1);
+        authedMethods[0] = SubProxy.exec.selector;
 
-        assertEq(proxy.wards(address(0)), 1);
-
-        vm.prank(address(0));
-        proxy.exec(address(target), abi.encodeWithSelector(Target.getSender.selector));
-
-        // --------------------
-        vm.expectEmit(true, false, false, false);
-        emit Deny(address(0));
-        proxy.deny(address(0));
-
-        assertEq(proxy.wards(address(0)), 0);
-
-        vm.prank(address(0));
-        vm.expectRevert("SubProxy/not-authorized");
-        proxy.exec(address(target), abi.encodeWithSelector(Target.getSender.selector));
+        vm.startPrank(sender);
+        checkModifier(address(proxy), "SubProxy/not-authorized", authedMethods);
     }
-
-    event Rely(address indexed usr);
-    event Deny(address indexed usr);
 }
 
 contract Target {

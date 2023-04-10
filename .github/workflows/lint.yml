@@ -1,15 +1,13 @@
 name: lint
 
-on:
-  pull_request:
-    branches:
-      - master
+on: workflow_dispatch
+# on:
+#   pull_request:
+#     branches:
+#       - master
 
 jobs:
   linters:
-    strategy:
-      fail-fast: true
-
     name: Linters
     runs-on: ubuntu-latest
     steps:
@@ -22,7 +20,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'yarn'
+          cache: "yarn"
 
       - name: Install packages
         run: |

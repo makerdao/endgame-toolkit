@@ -31,8 +31,8 @@ jobs:
         run: |
           forge --version
           forge build --sizes
+        id: build_0_6_x
 
-        id: build
       - name: Run Forge build
         run: |
           forge --version

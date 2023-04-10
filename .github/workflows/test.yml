@@ -25,18 +25,22 @@ jobs:
         with:
           version: nightly
 
+      - name: Update Deps
+        run: |
+          forge --version
+          forge update
+        id: update
+
       - name: Run Forge build (solc 0.6.x)
         env:
           FOUNDRY_PROFILE: 0_6_x
         run: |
-          forge --version
           export FOUNDRY_PROFILE=0_6_x
           FOUNDRY_PROFILE=0_6_x forge build --sizes
         id: build_0_6_x
 
       - name: Run Forge build
         run: |
-          forge --version
           forge build --sizes
         id: build
 

@@ -72,10 +72,8 @@ contract SubProxyTest is DssTest {
     function testModifiers(address sender) public {
         vm.assume(sender != address(this));
 
-        bytes4[] memory authedMethods = new bytes4[](3);
-        authedMethods[0] = SubProxy.rely.selector;
-        authedMethods[1] = SubProxy.deny.selector;
-        authedMethods[2] = SubProxy.exec.selector;
+        bytes4[] memory authedMethods = new bytes4[](1);
+        authedMethods[0] = SubProxy.exec.selector;
 
         vm.startPrank(sender);
         checkModifier(address(proxy), "SubProxy/not-authorized", authedMethods);

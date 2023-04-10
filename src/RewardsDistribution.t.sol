@@ -119,6 +119,32 @@ contract RewardsDistributionTest is DssTest {
         dist.file("vestId", 100);
     }
 
+    function testRevertFileInvalidUsr() public {
+        address usr = address(0x1337);
+        uint256 tot = totalRewards;
+        uint256 bgn = block.timestamp; // start immediately
+        uint256 tau = duration; // 1 year duration
+        uint256 eta = 0; // No cliff; start immediatebly
+        address mgr = address(dist);
+        uint256 newVestId = _createVest(usr, tot, bgn, tau, eta, mgr);
+
+        vm.expectRevert("RewardsDistribution/invalid-vest-usr");
+        dist.file("vestId", newVestId);
+    }
+
+    function testRevertFileInvalidMgr() public {
+        address usr = address(farm);
+        uint256 tot = totalRewards;
+        uint256 bgn = block.timestamp; // start immediately
+        uint256 tau = duration; // 1 year duration
+        uint256 eta = 0; // No cliff; start immediatebly
+        address mgr = address(0x1337);
+        uint256 newVestId = _createVest(usr, tot, bgn, tau, eta, mgr);
+
+        vm.expectRevert("RewardsDistribution/invalid-vest-mgr");
+        dist.file("vestId", newVestId);
+    }
+
     function testAuth() public {
         checkAuth(address(dist), "RewardsDistribution");
     }

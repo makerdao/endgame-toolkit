@@ -34,11 +34,15 @@ contract RewardsDistribution {
 
     /// @dev Vest IDs are sequential, but they are incremented before usage, meaning `0` is not a valid vest ID.
     uint256 internal constant INVALID_VEST_ID = 0;
+
     /// @notice The vest ID managed by this contract.
     /// @dev It is initialized to an invalid value to prevent calls before the vest ID being set.
     /// The reason this is not a required constructor parameter is that there is a circular dependency
     /// between this contract and the creation of the vest: the address of this contract must be the vest `mgr`.
     uint256 public vestId = INVALID_VEST_ID;
+
+    /// @notice Tracks the last time the a vested amount was claimed.
+    uint256 public lastVestedAt;
 
     /**
      * @dev `usr` was granted owner access.
@@ -67,16 +71,6 @@ contract RewardsDistribution {
      * @param amount The total tokens in the current distribution.
      */
     event Distribute(uint256 amount);
-
-    /**
-     * @notice Returns the max between `a` and `b`.
-     * @param a The first number.
-     * @param a The seconde number.
-     * @return The greater number.
-     */
-    function _max(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a > b ? a : b;
-    }
 
     modifier auth() {
         require(wards[msg.sender] == 1, "RewardsDistribution/not-authorized");
@@ -165,6 +159,7 @@ contract RewardsDistribution {
         require(dssVest.usr(_vestId) == address(stakingRewards), "RewardsDistribution/invalid-vest-usr");
         require(dssVest.mgr(_vestId) == address(this), "RewardsDistribution/invalid-vest-mgr");
         vestId = _vestId;
+        lastVestedAt = 0;
     }
 
     /**
@@ -178,28 +173,42 @@ contract RewardsDistribution {
 
     /**
      * @notice Distributes the amount of rewards due since the last distribution.
-     * @dev The amount calculation is delegated to `calc`.
+     * @dev The amount calculation is delegated to `calc.getAmount()`.
      *  - If the returned value is `0`, the distribution will fail.
-     *  - If the returned value is greater than the current unpaid vested amount,
-     *    the distribution will be capped to the latter.
+     *  - If the returned value is greater than the current unpaid amount, the distributed amount will the latter.
      */
     function distribute() external {
         require(vestId != INVALID_VEST_ID, "RewardsDistribution/invalid-vest-id");
         require(dssVest.unpaid(vestId) > 0, "RewardsDistribution/empty-vest");
 
-        uint256 when = block.timestamp;
-        uint256 tot = dssVest.tot(vestId);
-        uint256 fin = dssVest.fin(vestId);
-        uint256 clf = dssVest.clf(vestId);
-        // If this is the 1st distribution, lastUpdateTime would not have been updated.
-        uint256 prev = _max(clf, stakingRewards.lastUpdateTime());
+        uint256 total = dssVest.tot(vestId);
+        uint256 finish = dssVest.fin(vestId);
+        uint256 cliff = dssVest.clf(vestId);
+        // If `lastVestedAt == 0`, it means it this is the first time we call `distribute` for the current `vestId`.
+        uint256 prev = lastVestedAt == 0 ? cliff : lastVestedAt;
 
-        uint256 amount = calc.getAmount(when, prev, tot, fin, clf);
+        uint256 amount = calc.getAmount(block.timestamp, prev, total, finish, cliff);
         require(amount > 0, "RewardsDistribution/no-pending-amount");
+
+        lastVestedAt = block.timestamp;
 
         dssVest.vest(vestId, amount);
         stakingRewards.notifyRewardAmount(amount);
 
         emit Distribute(amount);
+    }
+
+    /*//////////////////////////////////////
+                      Math
+    //////////////////////////////////////*/
+
+    /**
+     * @notice Returns the max between `a` and `b`.
+     * @param a The first number.
+     * @param a The seconde number.
+     * @return The greater number.
+     */
+    function _max(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a > b ? a : b;
     }
 }

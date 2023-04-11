@@ -95,6 +95,62 @@ contract RewardsDistributionTest is DssTest {
         assertApproxEqRel(token.balanceOf(address(farm)), totalRewards, tolerance);
     }
 
+    function testRegressionDistributeFromMultipleVests() public {
+        // 1st vest
+        skip(duration);
+
+        assertEq(token.balanceOf(address(farm)), 0);
+
+        vm.expectEmit(false, false, false, true, address(farm));
+        emit RewardAdded(totalRewards);
+        dist.distribute();
+
+        assertEq(token.balanceOf(address(farm)), totalRewards);
+
+        // 2nd vest
+
+        // We will create a vest that started 1 year ago and also have no cliff to check whether the distribute function
+        // will send the total amount at once as it should.
+        address usr = address(farm);
+        uint256 tot = totalRewards / 2;
+        uint256 bgn = block.timestamp - duration; // start in the past
+        uint256 tau = duration; // 1 year duration
+        uint256 eta = 0; // No cliff; start immediatebly
+        address mgr = address(dist);
+        uint256 newVestId = _createVest(usr, tot, bgn, tau, eta, mgr);
+        dist.file("vestId", newVestId);
+
+        vm.expectEmit(false, false, false, true, address(farm));
+        emit RewardAdded(tot);
+        dist.distribute();
+
+        assertEq(token.balanceOf(address(farm)), totalRewards + tot);
+
+        // 3rd vest
+
+        // We will create a vest that will only start to accrue in the future, so any calls to `distribute` should fail
+        // before the elapsed time passes.
+        uint256 tot2 = tot / 2;
+        bgn = block.timestamp + duration; // start in the future
+        tau = duration; // 1 year duration
+        eta = 0; // No cliff; start immediatebly
+        newVestId = _createVest(usr, tot2, bgn, tau, eta, mgr);
+        dist.file("vestId", newVestId);
+
+        vm.expectRevert("RewardsDistribution/empty-vest");
+        dist.distribute();
+
+        // After the initial time + the duration pass...
+        vm.warp(bgn + tau);
+
+        // We can claim the total amount `tot2` all at once.
+        vm.expectEmit(false, false, false, true, address(farm));
+        emit RewardAdded(tot2);
+        dist.distribute();
+
+        assertEq(token.balanceOf(address(farm)), totalRewards + tot + tot2);
+    }
+
     function testRevertDistributeInvalidVestId() public {
         // We're `file`ing a valid `vestId` on `setUp`, so we need to revert it to its initial value
         stdstore.target(address(dist)).sig("vestId()").checked_write(bytes32(0));

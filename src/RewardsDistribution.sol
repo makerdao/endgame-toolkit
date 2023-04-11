@@ -136,6 +136,19 @@ contract RewardsDistribution {
     }
 
     /**
+     * @notice Updates the `vestId` managed by this contract.
+     * @dev The vest must be valid, in favor of `stakingRewards` and managed by this contract.
+     * @param _vestId The new vest ID.
+     */
+    function setVestId(uint256 _vestId) internal {
+        require(dssVest.valid(_vestId), "RewardsDistribution/invalid-vest-id");
+        require(dssVest.usr(_vestId) == address(stakingRewards), "RewardsDistribution/invalid-vest-usr");
+        require(dssVest.mgr(_vestId) == address(this), "RewardsDistribution/invalid-vest-mgr");
+        vestId = _vestId;
+        lastVestedAt = 0;
+    }
+
+    /**
      * @notice Updates a contract parameter.
      * @param what The changed parameter name. `"calc"
      * @param data The new value of the parameter.
@@ -148,19 +161,6 @@ contract RewardsDistribution {
         }
 
         emit File(what, data);
-    }
-
-    /**
-     * @notice Updates the `vestId` managed by this contract.
-     * @dev The vest must be valid, in favor of `stakingRewards` and managed by this contract.
-     * @param _vestId The new vest ID.
-     */
-    function setVestId(uint256 _vestId) internal {
-        require(dssVest.valid(_vestId), "RewardsDistribution/invalid-vest-id");
-        require(dssVest.usr(_vestId) == address(stakingRewards), "RewardsDistribution/invalid-vest-usr");
-        require(dssVest.mgr(_vestId) == address(this), "RewardsDistribution/invalid-vest-mgr");
-        vestId = _vestId;
-        lastVestedAt = 0;
     }
 
     /**

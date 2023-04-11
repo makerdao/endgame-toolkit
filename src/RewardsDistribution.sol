@@ -20,6 +20,10 @@ import {DssVestWithGemLike} from "./interfaces/DssVestWithGemLike.sol";
 import {StakingRewardsLike} from "./interfaces/StakingRewardsLike.sol";
 import {DistributionCalc} from "./DistributionCalc.sol";
 
+/**
+ * @title RwardsDistribution: A permissionless bridge between {DssVest} and {StakingRewards}.
+ * @author @amusingaxl
+ */
 contract RewardsDistribution {
     /// @notice Addresses with owner access on this contract. `wards[usr]`
     mapping(address => uint256) public wards;
@@ -28,20 +32,17 @@ contract RewardsDistribution {
     DssVestWithGemLike public immutable dssVest;
     /// @notice StakingRewards instance to enable farming.
     StakingRewardsLike public immutable stakingRewards;
-
     /// @notice Distribution calculation strategy.
     DistributionCalc public calc;
 
     /// @dev Vest IDs are sequential, but they are incremented before usage, meaning `0` is not a valid vest ID.
     uint256 internal constant INVALID_VEST_ID = 0;
-
     /// @notice The vest ID managed by this contract.
     /// @dev It is initialized to an invalid value to prevent calls before the vest ID being set.
     /// The reason this is not a required constructor parameter is that there is a circular dependency
     /// between this contract and the creation of the vest: the address of this contract must be the vest `mgr`.
     uint256 public vestId = INVALID_VEST_ID;
-
-    /// @notice Tracks the last time the a vested amount was claimed.
+    /// @notice Tracks the last time a vested amount was claimed.
     uint256 public lastVestedAt;
 
     /**
@@ -196,19 +197,5 @@ contract RewardsDistribution {
         stakingRewards.notifyRewardAmount(amount);
 
         emit Distribute(amount);
-    }
-
-    /*//////////////////////////////////////
-                      Math
-    //////////////////////////////////////*/
-
-    /**
-     * @notice Returns the max between `a` and `b`.
-     * @param a The first number.
-     * @param a The seconde number.
-     * @return The greater number.
-     */
-    function _max(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a > b ? a : b;
     }
 }

@@ -16,36 +16,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity =0.8.19;
 
-interface DistributionCalc {
-    function getAmount(
-        uint256 when,
-        uint256 prev,
-        uint256 tot,
-        uint256 fin,
-        uint256 clf
-    ) external pure returns (uint256);
-}
+import {DistributionCalc} from "../DistributionCalc.sol";
 
-contract LinearIncreasingDistribution is DistributionCalc {
-    function getAmount(
-        uint256 when,
-        uint256 prev,
-        uint256 tot,
-        uint256 fin,
-        uint256 clf
-    ) external pure returns (uint256) {
-        return (2 * tot * (when - prev)) / (fin ** 2 - clf ** 2);
-    }
-}
-
-contract ConstantDistribution is DistributionCalc {
-    function getAmount(
-        uint256 when,
-        uint256 prev,
-        uint256 tot,
-        uint256 fin,
-        uint256 clf
-    ) external pure returns (uint256) {
-        return (tot * (when - prev)) / (fin - clf);
+contract MockZeroDistribution is DistributionCalc {
+    function getAmount(uint256, uint256, uint256, uint256, uint256) external pure returns (uint256) {
+        return 0;
     }
 }

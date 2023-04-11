@@ -43,6 +43,10 @@ interface DssVestWithGemLike {
     // DssVestMintable and DssVestTransferable.
     function gem() external view returns (address);
 
+    function rely(address who) external;
+
+    function deny(address who) external;
+
     function file(bytes32 what, uint256 data) external;
 
     function create(

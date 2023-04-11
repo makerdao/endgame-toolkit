@@ -17,11 +17,14 @@
 pragma solidity =0.8.19;
 
 import {DssTest, stdStorage, StdStorage} from "dss-test/DssTest.sol";
+import {MockStakingRewards} from "./mock/MockStakingRewards.sol";
+import {MockZeroDistribution} from "./mock/MockZeroDistribution.sol";
+
 import {DssVestWithGemLike} from "./interfaces/DssVestWithGemLike.sol";
 import {StakingRewardsLike} from "./interfaces/StakingRewardsLike.sol";
 import {SDAO} from "./SDAO.sol";
 import {RewardsDistribution} from "./RewardsDistribution.sol";
-import {DistributionCalc, LinearDistribution, ConstantDistribution} from "./DistributionCalc.sol";
+import {DistributionCalc, LinearIncreasingDistribution, ConstantDistribution} from "./DistributionCalc.sol";
 
 contract RewardsDistributionTest is DssTest {
     using stdStorage for StdStorage;
@@ -47,7 +50,7 @@ contract RewardsDistributionTest is DssTest {
 
         vest = DssVestWithGemLike(deployCode("DssVest.sol:DssVestMintable", abi.encode(address(token))));
         vest.file("cap", type(uint256).max);
-        farm = new FakeStakingRewards(address(token), 7 days);
+        farm = new MockStakingRewards(address(token), 7 days);
         calc = new ConstantDistribution();
         dist = new RewardsDistribution(address(vest), address(farm), address(calc));
 
@@ -106,7 +109,7 @@ contract RewardsDistributionTest is DssTest {
     }
 
     function testRevertDistributeNoPendingDistributionAmount() public {
-        dist.file("calc", address(new ZeroDistribution()));
+        dist.file("calc", address(new MockZeroDistribution()));
 
         skip(duration / 3);
 
@@ -191,30 +194,4 @@ contract RewardsDistributionTest is DssTest {
     }
 
     event RewardAdded(uint256 reward);
-}
-
-contract FakeStakingRewards is StakingRewardsLike {
-    address public rewardsToken;
-    uint256 public lastUpdateTime;
-    uint256 public rewardsDuration;
-
-    event RewardAdded(uint256 reward);
-
-    constructor(address _rewardsToken, uint256 _rewardsDuration) {
-        rewardsToken = _rewardsToken;
-        rewardsDuration = _rewardsDuration;
-        lastUpdateTime = block.timestamp;
-    }
-
-    function notifyRewardAmount(uint256 amt) external {
-        lastUpdateTime = block.timestamp;
-
-        emit RewardAdded(amt);
-    }
-}
-
-contract ZeroDistribution is DistributionCalc {
-    function getAmount(uint256, uint256, uint256, uint256, uint256) external pure returns (uint256) {
-        return 0;
-    }
 }

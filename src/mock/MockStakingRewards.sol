@@ -16,36 +16,24 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity =0.8.19;
 
-interface DistributionCalc {
-    function getAmount(
-        uint256 when,
-        uint256 prev,
-        uint256 tot,
-        uint256 fin,
-        uint256 clf
-    ) external pure returns (uint256);
-}
+import {StakingRewardsLike} from "../interfaces/StakingRewardsLike.sol";
 
-contract LinearIncreasingDistribution is DistributionCalc {
-    function getAmount(
-        uint256 when,
-        uint256 prev,
-        uint256 tot,
-        uint256 fin,
-        uint256 clf
-    ) external pure returns (uint256) {
-        return (2 * tot * (when - prev)) / (fin ** 2 - clf ** 2);
+contract MockStakingRewards is StakingRewardsLike {
+    address public rewardsToken;
+    uint256 public lastUpdateTime;
+    uint256 public rewardsDuration;
+
+    event RewardAdded(uint256 reward);
+
+    constructor(address _rewardsToken, uint256 _rewardsDuration) {
+        rewardsToken = _rewardsToken;
+        rewardsDuration = _rewardsDuration;
+        lastUpdateTime = block.timestamp;
     }
-}
 
-contract ConstantDistribution is DistributionCalc {
-    function getAmount(
-        uint256 when,
-        uint256 prev,
-        uint256 tot,
-        uint256 fin,
-        uint256 clf
-    ) external pure returns (uint256) {
-        return (tot * (when - prev)) / (fin - clf);
+    function notifyRewardAmount(uint256 amt) external {
+        lastUpdateTime = block.timestamp;
+
+        emit RewardAdded(amt);
     }
 }

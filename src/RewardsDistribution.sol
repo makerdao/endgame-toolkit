@@ -93,7 +93,7 @@ contract RewardsDistribution {
         dssVest = DssVestWithGemLike(_dssVest);
         stakingRewards = StakingRewardsLike(_stakingRewards);
 
-        calc = DistributionCalc(_calc);
+        setCalc(_calc);
         emit File("calc", _calc);
 
         wards[msg.sender] = 1;

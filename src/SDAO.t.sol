@@ -24,15 +24,26 @@ import {SDAO} from "./SDAO.sol";
  */
 contract SDAOTest is DssTest {
     SDAO token;
+    BalanceSum balanceSum;
 
     bytes32 constant PERMIT_TYPEHASH =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
     function setUp() public {
         token = new SDAO("Token", "TKN");
+        balanceSum = new BalanceSum(token);
+
+        token.rely(address(balanceSum));
+
+        excludeSender(address(0));
+        targetContract(address(balanceSum));
     }
 
-    function invariantMetadata() public {
+    function invariantBalanceSum() public {
+        assertEq(token.totalSupply(), balanceSum.sum());
+    }
+
+    function testMetadata() public {
         assertEq(token.name(), "Token");
         assertEq(token.symbol(), "TKN");
         assertEq(token.decimals(), 18);
@@ -478,24 +489,6 @@ contract SDAOTest is DssTest {
 
         vm.startPrank(sender);
         checkModifier(address(token), "SDAO/not-authorized", authedMethods);
-    }
-}
-
-contract SDAOInvariants is DssTest {
-    BalanceSum balanceSum;
-    SDAO token;
-
-    function setUp() public {
-        token = new SDAO("Token", "TKN");
-        balanceSum = new BalanceSum(token);
-
-        token.rely(address(balanceSum));
-
-        targetContract(address(balanceSum));
-    }
-
-    function invariantBalanceSum() public {
-        assertEq(token.totalSupply(), balanceSum.sum());
     }
 }
 

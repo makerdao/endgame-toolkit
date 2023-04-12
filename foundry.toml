@@ -5,6 +5,9 @@ libs = ['lib']
 solc_version = '0.8.19'
 optimizer = false
 
+[invariant]
+fail_on_revert = true
+
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
 [profile.0_6_x]
 # `src` must be different fot it to work.

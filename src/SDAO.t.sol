@@ -240,18 +240,18 @@ contract SDAOTest is DssTest {
         assertEq(token.balanceOf(to), amount);
     }
 
-    function testBurnFuzz(address from, uint256 mintAmount, uint256 burnAmount) public {
+    function testBurnFuzz(address from, uint256 mintedAmount, uint256 burntAmount) public {
         vm.assume(from != address(0) && from != address(token));
-        burnAmount = bound(burnAmount, 0, mintAmount);
+        burntAmount = bound(burntAmount, 0, mintedAmount);
 
-        token.mint(from, mintAmount);
+        token.mint(from, mintedAmount);
         vm.prank(from);
         token.approve(address(this), type(uint256).max);
 
-        token.burn(from, burnAmount);
+        token.burn(from, burntAmount);
 
-        assertEq(token.totalSupply(), mintAmount - burnAmount);
-        assertEq(token.balanceOf(from), mintAmount - burnAmount);
+        assertEq(token.totalSupply(), mintedAmount - burntAmount);
+        assertEq(token.balanceOf(from), mintedAmount - burntAmount);
     }
 
     function testApproveFuzz(address to, uint256 amount) public {
@@ -324,23 +324,23 @@ contract SDAOTest is DssTest {
         assertEq(token.nonces(owner), 1);
     }
 
-    function testRevertBurnInsufficientBalanceFuzz(address to, uint256 mintAmount, uint256 burnAmount) public {
+    function testRevertBurnInsufficientBalanceFuzz(address to, uint256 mintedAmount, uint256 burntAmount) public {
         vm.assume(to != address(0) && to != address(token));
-        mintAmount = bound(mintAmount, 0, type(uint256).max - 1);
-        burnAmount = bound(burnAmount, mintAmount + 1, type(uint256).max);
+        mintedAmount = bound(mintedAmount, 0, type(uint256).max - 1);
+        burntAmount = bound(burntAmount, mintedAmount + 1, type(uint256).max);
 
-        token.mint(to, mintAmount);
+        token.mint(to, mintedAmount);
 
         vm.expectRevert("SDAO/insufficient-balance");
-        token.burn(to, burnAmount);
+        token.burn(to, burntAmount);
     }
 
-    function testRevertTransferInsufficientBalanceFuzz(address to, uint256 mintAmount, uint256 sendAmount) public {
+    function testRevertTransferInsufficientBalanceFuzz(address to, uint256 mintedAmount, uint256 sendAmount) public {
         vm.assume(to != address(0) && to != address(token));
-        mintAmount = bound(mintAmount, 0, type(uint256).max - 1);
-        sendAmount = bound(sendAmount, mintAmount + 1, type(uint256).max);
+        mintedAmount = bound(mintedAmount, 0, type(uint256).max - 1);
+        sendAmount = bound(sendAmount, mintedAmount + 1, type(uint256).max);
 
-        token.mint(address(this), mintAmount);
+        token.mint(address(this), mintedAmount);
 
         vm.expectRevert("SDAO/insufficient-balance");
         token.transfer(to, sendAmount);
@@ -360,13 +360,17 @@ contract SDAOTest is DssTest {
         token.transferFrom(from, to, amount);
     }
 
-    function testRevertTransferFromInsufficientBalanceFuzz(address to, uint256 mintAmount, uint256 sendAmount) public {
+    function testRevertTransferFromInsufficientBalanceFuzz(
+        address to,
+        uint256 mintedAmount,
+        uint256 sendAmount
+    ) public {
         vm.assume(to != address(0) && to != address(token));
-        mintAmount = bound(mintAmount, 0, type(uint256).max - 1);
-        sendAmount = bound(sendAmount, mintAmount + 1, type(uint256).max);
+        mintedAmount = bound(mintedAmount, 0, type(uint256).max - 1);
+        sendAmount = bound(sendAmount, mintedAmount + 1, type(uint256).max);
 
         address from = address(0xABCD);
-        token.mint(from, mintAmount);
+        token.mint(from, mintedAmount);
         vm.prank(from);
         token.approve(address(this), sendAmount);
 
@@ -484,6 +488,10 @@ contract SDAOInvariants is DssTest {
     function setUp() public {
         token = new SDAO("Token", "TKN");
         balanceSum = new BalanceSum(token);
+
+        token.rely(address(balanceSum));
+
+        targetContract(address(balanceSum));
     }
 
     function invariantBalanceSum() public {
@@ -491,22 +499,36 @@ contract SDAOInvariants is DssTest {
     }
 }
 
-contract BalanceSum {
-    SDAO token;
+contract BalanceSum is DssTest {
+    SDAO public token;
     uint256 public sum;
 
     constructor(SDAO _token) {
         token = _token;
     }
 
-    function mint(address from, uint256 amount) public {
-        token.mint(from, amount);
+    function mint(address to, uint256 amount) public {
+        // We cannot use vm.assume() because it causes the call to fail.
+        if (to == address(0) || to == address(token)) return;
+
+        amount = bound(amount, 1, type(uint248).max);
+
+        token.mint(to, amount);
         sum += amount;
     }
 
-    function burn(address from, uint256 amount) public {
-        token.burn(from, amount);
-        sum -= amount;
+    function burn(address from, uint256 mintedAmount, uint256 burntAmount) public {
+        if (from == address(0) || from == address(token)) return;
+
+        mintedAmount = bound(mintedAmount, 1, type(uint248).max);
+        burntAmount = bound(burntAmount, 1, mintedAmount);
+
+        token.mint(from, mintedAmount);
+        sum += mintedAmount;
+
+        vm.prank(address(from));
+        token.burn(from, burntAmount);
+        sum -= burntAmount;
     }
 
     function approve(address to, uint256 amount) public {
@@ -514,10 +536,28 @@ contract BalanceSum {
     }
 
     function transferFrom(address from, address to, uint256 amount) public {
+        if (to == address(0) || to == address(token)) return;
+        if (from == address(0) || from == address(token)) return;
+
+        amount = bound(amount, 1, type(uint248).max);
+
+        token.mint(from, amount);
+        sum += amount;
+
+        vm.prank(from);
+        token.approve(address(this), amount);
+
         token.transferFrom(from, to, amount);
     }
 
     function transfer(address to, uint256 amount) public {
+        if (to == address(0) || to == address(token)) return;
+
+        amount = bound(amount, 1, type(uint248).max);
+
+        token.mint(address(this), amount);
+        sum += amount;
+
         token.transfer(to, amount);
     }
 }

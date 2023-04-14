@@ -58,6 +58,10 @@ interface DssVestWithGemLike {
         address _mgr
     ) external returns (uint256 id);
 
+    function restrict(uint256 _id) external;
+
+    function unrestrict(uint256 _id) external;
+
     function vest(uint256 id) external;
 
     function vest(uint256 id, uint256 _maxAmt) external;

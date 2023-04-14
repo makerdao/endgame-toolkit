@@ -18,6 +18,7 @@ pragma solidity 0.8.19;
 
 import {DssVestWithGemLike} from "./interfaces/DssVestWithGemLike.sol";
 import {StakingRewardsLike} from "./interfaces/StakingRewardsLike.sol";
+import {GemLike} from "./interfaces/GemLike.sol";
 import {DistributionCalc} from "./DistributionCalc.sol";
 
 /**
@@ -32,6 +33,8 @@ contract RewardsDistribution {
     DssVestWithGemLike public immutable dssVest;
     /// @notice StakingRewards instance to enable farming.
     StakingRewardsLike public immutable stakingRewards;
+    /// @notice Token in which rewards are being paid.
+    GemLike public immutable gem;
     /// @notice Distribution calculation strategy.
     DistributionCalc public calc;
 
@@ -40,7 +43,7 @@ contract RewardsDistribution {
     /// @notice The vest ID managed by this contract.
     /// @dev It is initialized to an invalid value to prevent calls before the vest ID being set.
     /// The reason this is not a required constructor parameter is that there is a circular dependency
-    /// between this contract and the creation of the vest: the address of this contract must be the vest `mgr`.
+    /// between this contract and the creation of the vest: the address of this contract must be the vest `usr`.
     uint256 public vestId = INVALID_VEST_ID;
     /// @notice Tracks the last time a vested amount was claimed.
     uint256 public lastVestedAt;
@@ -85,13 +88,12 @@ contract RewardsDistribution {
      * @param _calc The contract the function to calculate how the rewards distribution must be done.
      */
     constructor(address _dssVest, address _stakingRewards, address _calc) {
-        require(
-            DssVestWithGemLike(_dssVest).gem() == StakingRewardsLike(_stakingRewards).rewardsToken(),
-            "RewardsDistribution/invalid-gem"
-        );
+        address _gem = DssVestWithGemLike(_dssVest).gem();
+        require(_gem == StakingRewardsLike(_stakingRewards).rewardsToken(), "RewardsDistribution/invalid-gem");
 
         dssVest = DssVestWithGemLike(_dssVest);
         stakingRewards = StakingRewardsLike(_stakingRewards);
+        gem = GemLike(_gem);
 
         setCalc(_calc);
         emit File("calc", _calc);
@@ -137,13 +139,18 @@ contract RewardsDistribution {
 
     /**
      * @notice Updates the `vestId` managed by this contract.
-     * @dev The vest must be valid, in favor of `stakingRewards` and managed by this contract.
+     * @dev The `_vestId` must be valid, in favor of this contract.
+     * @dev If the vest stream is not restricted already, it will be made so.
      * @param _vestId The new vest ID.
      */
     function setVestId(uint256 _vestId) internal {
         require(dssVest.valid(_vestId), "RewardsDistribution/invalid-vest-id");
-        require(dssVest.usr(_vestId) == address(stakingRewards), "RewardsDistribution/invalid-vest-usr");
-        require(dssVest.mgr(_vestId) == address(this), "RewardsDistribution/invalid-vest-mgr");
+        require(dssVest.usr(_vestId) == address(this), "RewardsDistribution/invalid-vest-usr");
+
+        if (dssVest.res(_vestId) == 0) {
+            dssVest.restrict(_vestId);
+        }
+
         vestId = _vestId;
         lastVestedAt = 0;
     }
@@ -194,6 +201,7 @@ contract RewardsDistribution {
         lastVestedAt = block.timestamp;
 
         dssVest.vest(vestId, amount);
+        require(gem.transfer(address(stakingRewards), amount), "RewardsDistribution/transfer-failed");
         stakingRewards.notifyRewardAmount(amount);
 
         emit Distribute(amount);

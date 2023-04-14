@@ -16,29 +16,72 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity 0.8.19;
 
+/**
+ * @title Calculates the distribution amount given distribution and vesting parameters.
+ * @author amusingaxl
+ */
 interface DistributionCalc {
+    /**
+     * @notice Gets the amount to be distributed from a vesting stream.
+     * @param when The time when the distribution should be made.
+     * @param prev The time when the last distribution was made.
+     * @param tot The total amount of the vesting stream.
+     * @param fin The time when the the vesting stream ends.
+     * @param clf The time when the cliff of the vesting stream ends.
+     * @return The amount to be distributed.
+     */
     function getAmount(
         uint256 when,
         uint256 prev,
         uint256 tot,
         uint256 fin,
         uint256 clf
-    ) external pure returns (uint256);
+    ) external view returns (uint256);
 }
 
+/**
+ * @title Calculates the reward amount from a linear function with a positive slope.
+ * @author amusingaxl
+ */
 contract LinearIncreasingDistribution is DistributionCalc {
+    /// @dev The initial raate to start the distribution.
+    uint256 public immutable initialRate;
+
+    /**
+     * @param _initialRate The initial raate to start the distribution.
+     */
+    constructor(uint256 _initialRate) {
+        initialRate = _initialRate;
+    }
+
+    /**
+     * @inheritdoc DistributionCalc
+     */
     function getAmount(
         uint256 when,
         uint256 prev,
         uint256 tot,
         uint256 fin,
         uint256 clf
-    ) external pure returns (uint256) {
-        return (2 * tot * (when - prev)) / (fin ** 2 - clf ** 2);
+    ) external view returns (uint256) {
+        uint256 streamDuration = (fin - clf);
+        uint256 distributionInterval = (when - prev);
+        uint256 divisor = (fin + clf) * streamDuration;
+
+        return
+            (((tot - (initialRate * streamDuration)) * ((when + prev) * distributionInterval)) +
+                (initialRate * distributionInterval * divisor)) / divisor;
     }
 }
 
+/**
+ * @title Calculates the reward amount as a constant function.
+ * @author amusingaxl
+ */
 contract ConstantDistribution is DistributionCalc {
+    /**
+     * @inheritdoc DistributionCalc
+     */
     function getAmount(
         uint256 when,
         uint256 prev,

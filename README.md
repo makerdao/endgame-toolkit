@@ -67,6 +67,19 @@ yarn install
 forge update
 ```
 
+### Build
+
+**⚠️ ATTENTION:** The order of execution is important here.
+
+```bash
+# 1. Build the Solidity 0.6.x contract
+FOUNDRY_PROFILE=0_6_x forge build
+# 2. Build the default Solidity 0.8.x contracts
+forge build
+```
+
+Notice that if you use `forge build --force`, the `out/` directory is going to be erased.
+
 ### Run tests
 
 ```bash

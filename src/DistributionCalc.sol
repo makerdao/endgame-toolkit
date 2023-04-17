@@ -44,11 +44,11 @@ interface DistributionCalc {
  * @author amusingaxl
  */
 contract LinearIncreasingDistribution is DistributionCalc {
-    /// @dev The initial raate to start the distribution.
+    /// @dev The initial rate to start the distribution.
     uint256 public immutable initialRate;
 
     /**
-     * @param _initialRate The initial raate to start the distribution.
+     * @param _initialRate The initial rate to start the distribution.
      */
     constructor(uint256 _initialRate) {
         initialRate = _initialRate;

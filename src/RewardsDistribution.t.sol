@@ -53,7 +53,7 @@ contract RewardsDistributionTest is DssTest {
     uint256 constant DEFAULT_TOTAL_REWARDS = 4_000_000 * 10 ** 18;
     uint256 constant DEFAULT_DURATION = 365 days;
     uint256 constant DEFAULT_CLIFF = 0;
-    uint256 constant DEFAULT_INITIAL_RATE = uint256(100_000 * 10 ** 18) / DEFAULT_DURATION;
+    uint256 constant DEFAULT_STARTING_RATE = uint256(100_000 * 10 ** 18) / DEFAULT_DURATION;
 
     function setUp() public {
         // DssVest checks if params are not too far away in the future or in the past relative to `block.timestamp`.
@@ -76,7 +76,7 @@ contract RewardsDistributionTest is DssTest {
         l = _setUpDistributionParams(
             DistributionParams({
                 dist: RewardsDistribution(address(0)),
-                calc: new LinearIncreasingDistribution(DEFAULT_INITIAL_RATE),
+                calc: new LinearIncreasingDistribution(DEFAULT_STARTING_RATE),
                 vest: DssVestWithGemLike(address(0)),
                 farm: MockStakingRewards(address(0)),
                 token: SDAO(address(0)),

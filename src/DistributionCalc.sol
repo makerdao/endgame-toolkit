@@ -44,14 +44,14 @@ interface DistributionCalc {
  * @author amusingaxl
  */
 contract LinearIncreasingDistribution is DistributionCalc {
-    /// @dev The initial rate to start the distribution.
-    uint256 public immutable initialRate;
+    /// @dev The starting rate to start the distribution.
+    uint256 public immutable startingRate;
 
     /**
      * @param _initialRate The initial rate to start the distribution.
      */
     constructor(uint256 _initialRate) {
-        initialRate = _initialRate;
+        startingRate = _initialRate;
     }
 
     /**
@@ -69,8 +69,8 @@ contract LinearIncreasingDistribution is DistributionCalc {
         uint256 divisor = (fin + clf) * streamDuration;
 
         return
-            (((tot - (initialRate * streamDuration)) * ((when + prev) * distributionInterval)) +
-                (initialRate * distributionInterval * divisor)) / divisor;
+            (((tot - (startingRate * streamDuration)) * ((when + prev) * distributionInterval)) +
+                (startingRate * distributionInterval * divisor)) / divisor;
     }
 }
 

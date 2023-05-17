@@ -183,10 +183,9 @@ contract VestedRewardsDistribution {
     function distribute() external returns (uint256 amount) {
         require(vestId != INVALID_VEST_ID, "VestedRewardsDistribution/invalid-vest-id");
 
-        lastVestedAt = block.timestamp;
-
         uint256 unpaid = dssVest.unpaid(vestId);
         uint256 maxAmount = _getMaxAmount();
+        lastVestedAt = block.timestamp;
         dssVest.vest(vestId, maxAmount);
 
         // `dssVest.vest()` sadly does not return the actual amount of vested tokens.

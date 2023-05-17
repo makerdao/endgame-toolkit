@@ -25,7 +25,7 @@ import {DistributionCalc} from "./DistributionCalc.sol";
  * @title RwardsDistribution: A permissionless bridge between {DssVest} and {StakingRewards}.
  * @author @amusingaxl
  */
-contract RewardsDistribution {
+contract VestedRewardsDistribution {
     /// @notice Addresses with owner access on this contract. `wards[usr]`
     mapping(address => uint256) public wards;
 
@@ -35,8 +35,8 @@ contract RewardsDistribution {
     StakingRewardsLike public immutable stakingRewards;
     /// @notice Token in which rewards are being paid.
     GemLike public immutable gem;
-    /// @notice Distribution calculation strategy.
-    DistributionCalc public calc;
+    /// @notice Optional custom distribution schedule strategy
+    address public calc;
 
     /// @dev Vest IDs are sequential, but they are incremented before usage, meaning `0` is not a valid vest ID.
     uint256 internal constant INVALID_VEST_ID = 0;
@@ -77,25 +77,26 @@ contract RewardsDistribution {
     event Distribute(uint256 amount);
 
     modifier auth() {
-        require(wards[msg.sender] == 1, "RewardsDistribution/not-authorized");
+        require(wards[msg.sender] == 1, "VestedRewardsDistribution/not-authorized");
         _;
     }
 
     /**
      * @dev The token `gem` used in DssVest must be the same as `rewardsToken` in StakingRewards.
+     * @dev If `_calc == address(0)` the distribution schedule will mirror the vesting schedule.
      * @param _dssVest The DssVest instance as the source of the funds.
      * @param _stakingRewards The farming contract.
-     * @param _calc The contract the function to calculate how the rewards distribution must be done.
+     * @param _calc Optional strategy for custom rewards distribution schedule.
      */
     constructor(address _dssVest, address _stakingRewards, address _calc) {
         address _gem = DssVestWithGemLike(_dssVest).gem();
-        require(_gem == StakingRewardsLike(_stakingRewards).rewardsToken(), "RewardsDistribution/invalid-gem");
+        require(_gem == StakingRewardsLike(_stakingRewards).rewardsToken(), "VestedRewardsDistribution/invalid-gem");
 
         dssVest = DssVestWithGemLike(_dssVest);
         stakingRewards = StakingRewardsLike(_stakingRewards);
         gem = GemLike(_gem);
 
-        setCalc(_calc);
+        calc = _calc;
         emit File("calc", _calc);
 
         wards[msg.sender] = 1;
@@ -129,9 +130,9 @@ contract RewardsDistribution {
      */
     function file(bytes32 what, uint256 data) external auth {
         if (what == "vestId") {
-            setVestId(data);
+            _setVestId(data);
         } else {
-            revert("RewardsDistribution/file-unrecognized-param");
+            revert("VestedRewardsDistribution/file-unrecognized-param");
         }
 
         emit File(what, data);
@@ -140,12 +141,14 @@ contract RewardsDistribution {
     /**
      * @notice Updates the `vestId` managed by this contract.
      * @dev The `_vestId` must be valid, in favor of this contract.
+     * @dev Vesting streams whose `clf > bgn` are not supported.
      * @dev If the vest stream is not restricted already, it will be made so.
      * @param _vestId The new vest ID.
      */
-    function setVestId(uint256 _vestId) internal {
-        require(dssVest.valid(_vestId), "RewardsDistribution/invalid-vest-id");
-        require(dssVest.usr(_vestId) == address(this), "RewardsDistribution/invalid-vest-usr");
+    function _setVestId(uint256 _vestId) internal {
+        require(dssVest.valid(_vestId), "VestedRewardsDistribution/invalid-vest-id");
+        require(dssVest.usr(_vestId) == address(this), "VestedRewardsDistribution/invalid-vest-usr");
+        require(dssVest.clf(_vestId) == dssVest.bgn(_vestId), "VestedRewardsDistribution/invalid-vest-cliff");
 
         if (dssVest.res(_vestId) == 0) {
             dssVest.restrict(_vestId);
@@ -162,48 +165,66 @@ contract RewardsDistribution {
      */
     function file(bytes32 what, address data) external auth {
         if (what == "calc") {
-            setCalc(data);
+            calc = data;
         } else {
-            revert("RewardsDistribution/file-unrecognized-param");
+            revert("VestedRewardsDistribution/file-unrecognized-param");
         }
 
         emit File(what, data);
     }
 
     /**
-     * @notice Updates the reward distribution strategy `calc`>
-     * @param _calc The new calc contract.
-     */
-    function setCalc(address _calc) internal {
-        require(_calc != address(0), "RewardsDistribution/invalid-address");
-        calc = DistributionCalc(_calc);
-    }
-
-    /**
      * @notice Distributes the amount of rewards due since the last distribution.
-     * @dev The amount calculation is delegated to `calc.getAmount()`.
+     * @dev The amount calculation is delegated to `calc.getMaxAmount()`.
      *  - If the returned value is `0`, the distribution will fail.
      *  - If the returned value is greater than the current unpaid amount, the distributed amount will the latter.
+     * @return amount The amount being distributed.
      */
-    function distribute() external {
-        require(vestId != INVALID_VEST_ID, "RewardsDistribution/invalid-vest-id");
-        require(dssVest.unpaid(vestId) > 0, "RewardsDistribution/empty-vest");
-
-        uint256 total = dssVest.tot(vestId);
-        uint256 finish = dssVest.fin(vestId);
-        uint256 cliff = dssVest.clf(vestId);
-        // If `lastVestedAt == 0`, it means it this is the first time we call `distribute` for the current `vestId`.
-        uint256 prev = lastVestedAt == 0 ? cliff : lastVestedAt;
-
-        uint256 amount = calc.getAmount(block.timestamp, prev, total, finish, cliff);
-        require(amount > 0, "RewardsDistribution/no-pending-amount");
+    function distribute() external returns (uint256 amount) {
+        require(vestId != INVALID_VEST_ID, "VestedRewardsDistribution/invalid-vest-id");
 
         lastVestedAt = block.timestamp;
 
-        dssVest.vest(vestId, amount);
-        require(gem.transfer(address(stakingRewards), amount), "RewardsDistribution/transfer-failed");
+        uint256 unpaid = dssVest.unpaid(vestId);
+        uint256 maxAmount = _getMaxAmount();
+        dssVest.vest(vestId, maxAmount);
+
+        // `dssVest.vest()` sadly does not return the actual amount of vested tokens.
+        // Also it is not safe to query the gem balance of this contract because it might have dangling tokens.
+        // The easiest way is to replicate the internal logic of DssVest here.
+        amount = _min(unpaid, maxAmount);
+        require(amount > 0, "VestedRewardsDistribution/no-pending-amount");
+        require(gem.transfer(address(stakingRewards), amount), "VestedRewardsDistribution/transfer-failed");
         stakingRewards.notifyRewardAmount(amount);
 
         emit Distribute(amount);
+    }
+
+    /**
+     * @notice Gets the max amount to pull from the vesting stream for the next distribution.
+     * @dev If `calc` is set, it delegates the calculation to that contract.
+     *      Otherwise, it returns the default amount `type(uint256.max)`.
+     * @return The max amount of tokens.
+     */
+    function _getMaxAmount() internal view returns (uint256) {
+        if (calc == address(0)) {
+            return type(uint256).max;
+        }
+
+        uint256 tot = dssVest.tot(vestId);
+        uint256 fin = dssVest.fin(vestId);
+        // We ensure that `clf == bgn`, so we could use either one.
+        uint256 clf = dssVest.clf(vestId);
+        // If `lastVestedAt == 0`, it means it this is the first time we call `distribute` for the current `vestId`.
+        uint256 prev = lastVestedAt == 0 ? clf : lastVestedAt;
+
+        return DistributionCalc(calc).getMaxAmount(block.timestamp, prev, tot, fin, clf);
+    }
+
+    /**
+     * @notice Returns the minimum between two values.
+     */
+    function _min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a > b ? b : a;
     }
 }

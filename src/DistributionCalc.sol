@@ -30,7 +30,7 @@ interface DistributionCalc {
      * @param clf The time when the cliff of the vesting stream ends.
      * @return The amount to be distributed.
      */
-    function getAmount(
+    function getMaxAmount(
         uint256 when,
         uint256 prev,
         uint256 tot,
@@ -43,21 +43,21 @@ interface DistributionCalc {
  * @title Calculates the reward amount from a linear function with a positive slope.
  * @author amusingaxl
  */
-contract LinearIncreasingDistribution is DistributionCalc {
-    /// @dev The starting rate to start the distribution.
+contract LinearRampUp is DistributionCalc {
+    /// @dev The starting rate of the the distribution.
     uint256 public immutable startingRate;
 
     /**
-     * @param _initialRate The initial rate to start the distribution.
+     * @param _startingRate The starting rate of the distribution.
      */
-    constructor(uint256 _initialRate) {
-        startingRate = _initialRate;
+    constructor(uint256 _startingRate) {
+        startingRate = _startingRate;
     }
 
     /**
      * @inheritdoc DistributionCalc
      */
-    function getAmount(
+    function getMaxAmount(
         uint256 when,
         uint256 prev,
         uint256 tot,
@@ -71,24 +71,5 @@ contract LinearIncreasingDistribution is DistributionCalc {
         return
             (((tot - (startingRate * streamDuration)) * ((when + prev) * distributionInterval)) +
                 (startingRate * distributionInterval * divisor)) / divisor;
-    }
-}
-
-/**
- * @title Calculates the reward amount as a constant function.
- * @author amusingaxl
- */
-contract ConstantDistribution is DistributionCalc {
-    /**
-     * @inheritdoc DistributionCalc
-     */
-    function getAmount(
-        uint256 when,
-        uint256 prev,
-        uint256 tot,
-        uint256 fin,
-        uint256 clf
-    ) external pure returns (uint256) {
-        return (tot * (when - prev)) / (fin - clf);
     }
 }

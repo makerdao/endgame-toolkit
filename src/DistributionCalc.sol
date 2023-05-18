@@ -64,12 +64,13 @@ contract LinearRampUp is DistributionCalc {
         uint256 fin,
         uint256 clf
     ) external view returns (uint256) {
-        uint256 streamDuration = (fin - clf);
-        uint256 distributionInterval = (when - prev);
-        uint256 divisor = (fin + clf) * streamDuration;
+        uint256 duration = fin - clf;
+        uint256 interval = when - prev;
+        uint256 divisor = duration ** 2;
 
         return
-            (((tot - (startingRate * streamDuration)) * ((when + prev) * distributionInterval)) +
-                (startingRate * distributionInterval * divisor)) / divisor;
+            ((tot - startingRate * duration) *
+                ((when - clf) ** 2 - (prev - clf) ** 2) +
+                (startingRate * interval * divisor)) / (divisor);
     }
 }

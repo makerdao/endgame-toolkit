@@ -49,7 +49,7 @@ contract VestedRewardsDistributionTest is DssTest {
     DistributionParams k;
     DistributionParams l;
 
-    uint256 constant DEFAULT_TOTAL_REWARDS = 3_000_000 * WAD;
+    uint256 constant DEFAULT_TOTAL_REWARDS = 12_000_000 * WAD;
     uint256 constant DEFAULT_DURATION = 365 days;
     uint256 constant DEFAULT_CLIFF = 0;
     uint256 constant DEFAULT_STARTING_RATE = uint256(100_000 * WAD) / DEFAULT_DURATION;

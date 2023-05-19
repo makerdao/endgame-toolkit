@@ -16,9 +16,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity 0.8.19;
 
-import {IStakingRewards} from "./interfaces/IStakingRewards.sol";
+import {IStakingRewards} from "./synthetix/interfaces/IStakingRewards.sol";
 import {DssVestWithGemLike} from "./interfaces/DssVestWithGemLike.sol";
-import {GemLike} from "./interfaces/GemLike.sol";
+import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {DistributionCalc} from "./DistributionCalc.sol";
 
 /**
@@ -34,7 +34,7 @@ contract VestedRewardsDistribution {
     /// @notice StakingRewards instance to enable farming.
     IStakingRewards public immutable stakingRewards;
     /// @notice Token in which rewards are being paid.
-    GemLike public immutable gem;
+    IERC20 public immutable gem;
     /// @notice Optional custom distribution schedule strategy
     address public calc;
 
@@ -97,7 +97,7 @@ contract VestedRewardsDistribution {
 
         dssVest = DssVestWithGemLike(_dssVest);
         stakingRewards = IStakingRewards(_stakingRewards);
-        gem = GemLike(_gem);
+        gem = IERC20(_gem);
 
         calc = _calc;
         emit File("calc", _calc);

@@ -1,4 +1,3 @@
-// SPDX-FileCopyrightText: © 2017, 2018, 2019 dbrock, rain, mrchico
 // SPDX-FileCopyrightText: © 2023 Dai Foundation <www.daifoundation.org>
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
@@ -14,14 +13,29 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-pragma solidity >=0.8.8;
+pragma solidity 0.8.19;
 
-interface GemLike {
-    function transfer(address to, uint256 amount) external returns (bool);
+import "forge-std/Script.sol";
+import {SubProxy} from "../src/SubProxy.sol";
 
-    function approve(address spender, uint256 allowance) external returns (bool);
+contract DeploySubProxy is Script {
+    function run() public returns (address) {
+        address changelog = vm.envAddress("CHANGELOG");
+        address owner = ChangelogLike(changelog).getAddress("MCD_PAUSE_PROXY");
+        require(owner != address(0), "Deploy: MCD_PAUSE_PROXY not set");
 
-    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+        vm.startBroadcast();
 
-    function balanceOf(address from) external view returns (uint256);
+        SubProxy proxy = new SubProxy();
+        // Rely the pause Proxy
+        proxy.rely(owner);
+        // Deny the deployer
+        proxy.deny(msg.sender);
+
+        return address(proxy);
+    }
+}
+
+interface ChangelogLike {
+    function getAddress(bytes32 key) external view returns (address);
 }

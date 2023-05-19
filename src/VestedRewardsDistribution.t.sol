@@ -17,10 +17,10 @@
 pragma solidity 0.8.19;
 
 import {DssTest, stdStorage, StdStorage} from "dss-test/DssTest.sol";
-import {MockStakingRewards} from "./mock/MockStakingRewards.sol";
-
+import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {DssVestWithGemLike} from "./interfaces/DssVestWithGemLike.sol";
-import {StakingRewardsLike} from "./interfaces/StakingRewardsLike.sol";
+import {IStakingRewards} from "./interfaces/IStakingRewards.sol";
+import {StakingRewards} from "./StakingRewards.sol";
 import {SDAO} from "./SDAO.sol";
 import {VestedRewardsDistribution} from "./VestedRewardsDistribution.sol";
 import {DistributionCalc, LinearRampUp} from "./DistributionCalc.sol";
@@ -40,8 +40,8 @@ contract VestedRewardsDistributionTest is DssTest {
         VestedRewardsDistribution dist;
         address calc;
         DssVestWithGemLike vest;
-        StakingRewardsLike farm;
-        SDAO token;
+        IStakingRewards farm;
+        IERC20Mintable rewardsToken;
         uint256 vestId;
         VestParams vestParams;
     }
@@ -65,8 +65,8 @@ contract VestedRewardsDistributionTest is DssTest {
                 dist: VestedRewardsDistribution(address(0)),
                 calc: address(0),
                 vest: DssVestWithGemLike(address(0)),
-                farm: MockStakingRewards(address(0)),
-                token: SDAO(address(0)),
+                farm: IStakingRewards(address(0)),
+                rewardsToken: IERC20Mintable(address(new SDAO("K Token", "K"))),
                 vestId: 0,
                 vestParams: _makeVestParams()
             })
@@ -77,8 +77,8 @@ contract VestedRewardsDistributionTest is DssTest {
                 dist: VestedRewardsDistribution(address(0)),
                 calc: address(new LinearRampUp(DEFAULT_STARTING_RATE)),
                 vest: DssVestWithGemLike(address(0)),
-                farm: MockStakingRewards(address(0)),
-                token: SDAO(address(0)),
+                farm: IStakingRewards(address(0)),
+                rewardsToken: IERC20Mintable(address(new SDAO("L Token", "L"))),
                 vestId: 0,
                 vestParams: _makeVestParams()
             })
@@ -89,13 +89,13 @@ contract VestedRewardsDistributionTest is DssTest {
         // 1st distribution
         skip(k.vestParams.tau / 3);
 
-        assertEq(k.token.balanceOf(address(k.farm)), 0, "Bad initial balance");
+        assertEq(k.rewardsToken.balanceOf(address(k.farm)), 0, "Bad initial balance");
 
         vm.expectEmit(false, false, false, true, address(k.dist));
         emit Distribute(k.vestParams.tot / 3);
         k.dist.distribute();
 
-        assertEq(k.token.balanceOf(address(k.farm)), k.vestParams.tot / 3, "Bad balance after 1st distribution");
+        assertEq(k.rewardsToken.balanceOf(address(k.farm)), k.vestParams.tot / 3, "Bad balance after 1st distribution");
 
         // 2nd distribution
         skip(k.vestParams.tau / 3);
@@ -108,7 +108,7 @@ contract VestedRewardsDistributionTest is DssTest {
         uint256 tolerance = 0.0001e18;
 
         assertApproxEqRel(
-            k.token.balanceOf(address(k.farm)),
+            k.rewardsToken.balanceOf(address(k.farm)),
             (2 * k.vestParams.tot) / 3,
             tolerance,
             "Bad balance after 2nd distribution"
@@ -122,7 +122,7 @@ contract VestedRewardsDistributionTest is DssTest {
         k.dist.distribute();
 
         assertApproxEqRel(
-            k.token.balanceOf(address(k.farm)),
+            k.rewardsToken.balanceOf(address(k.farm)),
             k.vestParams.tot,
             tolerance,
             "Bad balance after 3rd distribution"
@@ -140,7 +140,7 @@ contract VestedRewardsDistributionTest is DssTest {
         for (uint256 i = 0; i < totalDistributions; i++) {
             skip(timeSkip);
             k.dist.distribute();
-            balances[i] = k.token.balanceOf(address(k.farm));
+            balances[i] = k.rewardsToken.balanceOf(address(k.farm));
         }
 
         uint256[] memory deltas = new uint256[](totalDistributions - 1);
@@ -161,13 +161,13 @@ contract VestedRewardsDistributionTest is DssTest {
             );
         }
 
-        assertApproxEqRel(k.token.balanceOf(address(k.farm)), k.vestParams.tot, tolerance);
+        assertApproxEqRel(k.rewardsToken.balanceOf(address(k.farm)), k.vestParams.tot, tolerance);
     }
 
     function testDistributeLinearRampUp() public {
         skip(l.vestParams.tau);
 
-        assertEq(l.token.balanceOf(address(l.farm)), 0);
+        assertEq(l.rewardsToken.balanceOf(address(l.farm)), 0);
 
         vm.expectEmit(false, false, false, true, address(l.dist));
         emit Distribute(l.vestParams.tot);
@@ -175,7 +175,7 @@ contract VestedRewardsDistributionTest is DssTest {
 
         // Allow for 0,01% error tolerance due to rounding errors.
         uint256 tolerance = 0.0001e18;
-        assertApproxEqRel(l.token.balanceOf(address(l.farm)), l.vestParams.tot, tolerance);
+        assertApproxEqRel(l.rewardsToken.balanceOf(address(l.farm)), l.vestParams.tot, tolerance);
     }
 
     function testDistributeLinearRampUpEverIncreasingFuzz(uint256 totalDistributions) public {
@@ -189,7 +189,7 @@ contract VestedRewardsDistributionTest is DssTest {
         for (uint256 i = 0; i < totalDistributions; i++) {
             skip(timeSkip);
             l.dist.distribute();
-            balances[i] = l.token.balanceOf(address(l.farm));
+            balances[i] = l.rewardsToken.balanceOf(address(l.farm));
         }
 
         uint256[] memory deltas = new uint256[](totalDistributions - 1);
@@ -208,7 +208,7 @@ contract VestedRewardsDistributionTest is DssTest {
 
         // Check the final balance. Allow for 0,01% error tolerance due to rounding errors.
         uint256 tolerance = 0.0001e18;
-        assertApproxEqRel(l.token.balanceOf(address(l.farm)), l.vestParams.tot, tolerance);
+        assertApproxEqRel(l.rewardsToken.balanceOf(address(l.farm)), l.vestParams.tot, tolerance);
     }
 
     function testRevertDistributeInvalidVestId() public {
@@ -275,13 +275,13 @@ contract VestedRewardsDistributionTest is DssTest {
         // 1st vest
         skip(k.vestParams.tau);
 
-        assertEq(k.token.balanceOf(address(k.farm)), 0, "Bad initial balance");
+        assertEq(k.rewardsToken.balanceOf(address(k.farm)), 0, "Bad initial balance");
 
         vm.expectEmit(false, false, false, true, address(k.dist));
         emit Distribute(k.vestParams.tot);
         k.dist.distribute();
 
-        assertEq(k.token.balanceOf(address(k.farm)), k.vestParams.tot, "Bad balance after 1st distribution");
+        assertEq(k.rewardsToken.balanceOf(address(k.farm)), k.vestParams.tot, "Bad balance after 1st distribution");
 
         // 2nd vest
 
@@ -304,7 +304,7 @@ contract VestedRewardsDistributionTest is DssTest {
         k.dist.distribute();
 
         assertEq(
-            k.token.balanceOf(address(k.farm)),
+            k.rewardsToken.balanceOf(address(k.farm)),
             k.vestParams.tot + vestParams2.tot,
             "Bad balance after 2nd distribution"
         );
@@ -339,7 +339,7 @@ contract VestedRewardsDistributionTest is DssTest {
         k.dist.distribute();
 
         assertEq(
-            k.token.balanceOf(address(k.farm)),
+            k.rewardsToken.balanceOf(address(k.farm)),
             k.vestParams.tot + vestParams2.tot + vestParams3.tot,
             "Bad balance after 3rd distribution"
         );
@@ -347,16 +347,16 @@ contract VestedRewardsDistributionTest is DssTest {
 
     function testRegressionUnexpectedTokenBalanceOnDistDoesNotMessWithDistribution() public {
         // These tokens on the distribution contract should not be distributed.
-        l.token.mint(address(l.dist), 1_000_000_000 * WAD);
+        l.rewardsToken.mint(address(l.dist), 1_000_000_000 * WAD);
 
         skip(l.vestParams.tau / 3);
 
-        assertEq(l.token.balanceOf(address(l.farm)), 0, "Bad initial balance");
+        assertEq(l.rewardsToken.balanceOf(address(l.farm)), 0, "Bad initial balance");
 
         uint256 amount = l.dist.distribute();
 
         assertLt(amount, 1_000_000_000 * WAD, "Dangling tokens distributed");
-        assertEq(l.token.balanceOf(address(l.farm)), amount, "Bad final balance");
+        assertEq(l.rewardsToken.balanceOf(address(l.farm)), amount, "Bad final balance");
     }
 
     function _setUpDistributionParams(
@@ -364,33 +364,33 @@ contract VestedRewardsDistributionTest is DssTest {
     ) internal returns (DistributionParams memory result) {
         result = _distParams;
 
-        if (address(result.token) == address(0)) {
-            result.token = new SDAO("Token", "TKN");
+        if (address(result.rewardsToken) == address(0)) {
+            result.rewardsToken = IERC20Mintable(address(new SDAO("Token", "TKN")));
         }
 
         if (address(result.vest) == address(0)) {
             result.vest = DssVestWithGemLike(
-                deployCode("DssVest.sol:DssVestMintable", abi.encode(address(result.token)))
+                deployCode("DssVest.sol:DssVestMintable", abi.encode(address(result.rewardsToken)))
             );
             result.vest.file("cap", type(uint256).max);
         }
 
         if (address(result.farm) == address(0)) {
-            result.farm = new MockStakingRewards(address(result.token), 7 days);
+            result.farm = new StakingRewards(address(this), address(0), address(result.rewardsToken), address(0));
         }
 
         if (address(result.dist) == address(0)) {
             result.dist = new VestedRewardsDistribution(address(result.vest), address(result.farm), result.calc);
         }
 
+        result.farm.setRewardsDistribution(address(result.dist));
         _distParams.vestParams.usr = address(result.dist);
 
         (result.vestId, result.vestParams) = _setUpVest(result.vest, _distParams.vestParams);
-
         result.dist.file("vestId", result.vestId);
 
         // Allow DssVest to mint tokens
-        result.token.rely(address(result.vest));
+        WardsLike(address(result.rewardsToken)).rely(address(result.vest));
     }
 
     function _setUpVest(
@@ -514,6 +514,14 @@ contract VestedRewardsDistributionTest is DssTest {
     }
 
     event Distribute(uint256 amount);
+}
+
+interface IERC20Mintable is IERC20 {
+    function mint(address, uint256) external;
+}
+
+interface WardsLike {
+    function rely(address) external;
 }
 
 contract MockZeroDistribution is DistributionCalc {

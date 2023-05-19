@@ -16,8 +16,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity 0.8.19;
 
+import {IStakingRewards} from "./interfaces/IStakingRewards.sol";
 import {DssVestWithGemLike} from "./interfaces/DssVestWithGemLike.sol";
-import {StakingRewardsLike} from "./interfaces/StakingRewardsLike.sol";
 import {GemLike} from "./interfaces/GemLike.sol";
 import {DistributionCalc} from "./DistributionCalc.sol";
 
@@ -32,7 +32,7 @@ contract VestedRewardsDistribution {
     /// @notice DssVest instance for token rewards.
     DssVestWithGemLike public immutable dssVest;
     /// @notice StakingRewards instance to enable farming.
-    StakingRewardsLike public immutable stakingRewards;
+    IStakingRewards public immutable stakingRewards;
     /// @notice Token in which rewards are being paid.
     GemLike public immutable gem;
     /// @notice Optional custom distribution schedule strategy
@@ -90,10 +90,13 @@ contract VestedRewardsDistribution {
      */
     constructor(address _dssVest, address _stakingRewards, address _calc) {
         address _gem = DssVestWithGemLike(_dssVest).gem();
-        require(_gem == StakingRewardsLike(_stakingRewards).rewardsToken(), "VestedRewardsDistribution/invalid-gem");
+        require(
+            _gem == address(IStakingRewards(_stakingRewards).rewardsToken()),
+            "VestedRewardsDistribution/invalid-gem"
+        );
 
         dssVest = DssVestWithGemLike(_dssVest);
-        stakingRewards = StakingRewardsLike(_stakingRewards);
+        stakingRewards = IStakingRewards(_stakingRewards);
         gem = GemLike(_gem);
 
         calc = _calc;

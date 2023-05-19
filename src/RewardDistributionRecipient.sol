@@ -7,8 +7,6 @@ import {IStakingRewards} from "./interfaces/IStakingRewards.sol";
 abstract contract RewardsDistributionRecipient is IStakingRewards, Owned {
     address public override rewardsDistribution;
 
-    function notifyRewardAmount(uint256 reward) external virtual;
-
     modifier onlyRewardsDistribution() {
         require(msg.sender == rewardsDistribution, "Caller is not RewardsDistribution contract");
         _;

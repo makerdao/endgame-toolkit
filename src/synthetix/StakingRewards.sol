@@ -19,11 +19,10 @@ pragma solidity 0.8.19;
 import {SafeERC20, IERC20} from "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "openzeppelin-contracts/security/ReentrancyGuard.sol";
 import {IStakingRewards} from "./interfaces/IStakingRewards.sol";
-import {Owned} from "./utils/Pausable.sol";
 import {Pausable} from "./utils/Pausable.sol";
 
 // https://docs.synthetix.io/contracts/source/contracts/stakingrewards
-contract StakingRewards is IStakingRewards, Owned, Pausable, ReentrancyGuard {
+contract StakingRewards is IStakingRewards, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /* ========== STATE VARIABLES ========== */
@@ -31,7 +30,7 @@ contract StakingRewards is IStakingRewards, Owned, Pausable, ReentrancyGuard {
     IERC20 public immutable rewardsToken;
     IERC20 public immutable stakingToken;
 
-    address public override rewardsDistribution;
+    address public rewardsDistribution;
     uint256 public periodFinish = 0;
     uint256 public rewardRate = 0;
     uint256 public rewardsDuration = 7 days;
@@ -51,7 +50,7 @@ contract StakingRewards is IStakingRewards, Owned, Pausable, ReentrancyGuard {
         address _rewardsDistribution,
         address _rewardsToken,
         address _stakingToken
-    ) Owned(_owner) {
+    ) Pausable(_owner) {
         rewardsToken = IERC20(_rewardsToken);
         stakingToken = IERC20(_stakingToken);
         rewardsDistribution = _rewardsDistribution;

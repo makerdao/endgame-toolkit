@@ -36,6 +36,8 @@ interface IStakingRewards {
 
     function rewardsToken() external view returns (IERC20);
 
+    function stakingToken() external view returns (IERC20);
+
     function totalSupply() external view returns (uint256);
 
     // Mutative

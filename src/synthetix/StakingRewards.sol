@@ -18,19 +18,20 @@ pragma solidity 0.8.19;
 
 import {SafeERC20, IERC20} from "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "openzeppelin-contracts/security/ReentrancyGuard.sol";
-
-// Inheritance
-import {Pausable, Owned} from "./utils/Pausable.sol";
-import {RewardsDistributionRecipient} from "./RewardDistributionRecipient.sol";
+import {IStakingRewards} from "./interfaces/IStakingRewards.sol";
+import {Owned} from "./utils/Pausable.sol";
+import {Pausable} from "./utils/Pausable.sol";
 
 // https://docs.synthetix.io/contracts/source/contracts/stakingrewards
-contract StakingRewards is RewardsDistributionRecipient, ReentrancyGuard, Pausable {
+contract StakingRewards is IStakingRewards, Owned, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /* ========== STATE VARIABLES ========== */
 
-    IERC20 public rewardsToken;
-    IERC20 public stakingToken;
+    IERC20 public immutable rewardsToken;
+    IERC20 public immutable stakingToken;
+
+    address public override rewardsDistribution;
     uint256 public periodFinish = 0;
     uint256 public rewardRate = 0;
     uint256 public rewardsDuration = 7 days;
@@ -162,6 +163,10 @@ contract StakingRewards is RewardsDistributionRecipient, ReentrancyGuard, Pausab
         emit RewardsDurationUpdated(rewardsDuration);
     }
 
+    function setRewardsDistribution(address _rewardsDistribution) external onlyOwner {
+        rewardsDistribution = _rewardsDistribution;
+    }
+
     /* ========== MODIFIERS ========== */
 
     modifier updateReward(address account) {
@@ -171,6 +176,11 @@ contract StakingRewards is RewardsDistributionRecipient, ReentrancyGuard, Pausab
             rewards[account] = earned(account);
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
         }
+        _;
+    }
+
+    modifier onlyRewardsDistribution() {
+        require(msg.sender == rewardsDistribution, "Caller is not RewardsDistribution contract");
         _;
     }
 

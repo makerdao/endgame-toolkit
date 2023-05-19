@@ -165,6 +165,7 @@ contract StakingRewards is IStakingRewards, Owned, Pausable, ReentrancyGuard {
 
     function setRewardsDistribution(address _rewardsDistribution) external onlyOwner {
         rewardsDistribution = _rewardsDistribution;
+        emit RewardsDistributionUpdated(rewardsDistribution);
     }
 
     /* ========== MODIFIERS ========== */
@@ -192,5 +193,6 @@ contract StakingRewards is IStakingRewards, Owned, Pausable, ReentrancyGuard {
     event Withdrawn(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
     event RewardsDurationUpdated(uint256 newDuration);
+    event RewardsDistributionUpdated(address newRewardsDistribution);
     event Recovered(address token, uint256 amount);
 }

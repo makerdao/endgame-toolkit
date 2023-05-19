@@ -58,6 +58,13 @@ contract StakingRewardsTest is Test {
         assertEq(farm.rewardsDistribution(), address(0));
     }
 
+    function testSetRewardsDistributionEvent() public {
+        vm.expectEmit(false, false, false, true, address(farm));
+        emit RewardsDistributionUpdated(address(0));
+
+        farm.setRewardsDistribution(address(0));
+    }
+
     function testRevertOnUnauthorizedMethods() public {
         vm.startPrank(address(0));
 
@@ -418,6 +425,7 @@ contract StakingRewardsTest is Test {
     event Withdrawn(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
     event RewardsDurationUpdated(uint256 newDuration);
+    event RewardsDistributionUpdated(address newRewardsDistribution);
     event Recovered(address token, uint256 amount);
 }
 

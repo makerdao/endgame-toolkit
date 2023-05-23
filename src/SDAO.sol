@@ -24,7 +24,7 @@ interface IERC1271 {
 /**
  * @title SDAO: SubDAO-level governance token.
  * @dev This is a port from X-Domain Dai implementation: https://www.diffchecker.com/XeqEiDcn/ with additional features:
- *  - Addresses with `ward` permission can update `name` and `symbol`.
+ *      - Actors with owner access (`wards`) can update `name` and `symbol`.
  * @author @amusingaxl
  */
 contract SDAO {

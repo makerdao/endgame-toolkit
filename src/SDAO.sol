@@ -23,7 +23,8 @@ interface IERC1271 {
 
 /**
  * @title SDAO: SubDAO-level governance token.
- * @dev This is a port from X-Domain Dai implementation: https://www.diffchecker.com/XeqEiDcn/
+ * @dev This is a port from X-Domain Dai implementation: https://www.diffchecker.com/XeqEiDcn/ with additional features:
+ *      - Actors with owner access (`wards`) can update `name` and `symbol`.
  * @author @amusingaxl
  */
 contract SDAO {
@@ -64,6 +65,12 @@ contract SDAO {
      * @param usr The user address.
      */
     event Deny(address indexed usr);
+    /**
+     * @notice A contract parameter was updated.
+     * @param what The parameter being changed. One of: "name", "symbol".
+     * @param data The new value of the parameter.
+     */
+    event File(bytes32 indexed what, string data);
 
     /**
      * @notice Emitted when the allowance of a `spender` for an `owner` is set by a call to {approve}.
@@ -155,6 +162,25 @@ contract SDAO {
     function deny(address usr) external auth {
         wards[usr] = 0;
         emit Deny(usr);
+    }
+
+    /**
+     * @notice Updates token parameters.
+     * @dev There are no mechanisms to prevent governance from changing token parameters more than once.
+     *  We assume that the enforcement will be handled off-chain through governance artifacts.
+     * @param what The parameter being changed. One of: "name", "symbol".
+     * @param data The updated value for the parameter.
+     */
+    function file(bytes32 what, string calldata data) external auth {
+        if (what == "name") {
+            name = data;
+        } else if (what == "symbol") {
+            symbol = data;
+        } else {
+            revert("SDAO/file-unrecognized-param");
+        }
+
+        emit File(what, data);
     }
 
     // --- ERC20 Mutations ---

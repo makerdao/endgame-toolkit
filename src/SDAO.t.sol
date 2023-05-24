@@ -483,19 +483,12 @@ contract SDAOTest is DssTest {
     }
 
     function testFile() public {
-        checkFileString(address(token), "SDAO", ["name"]);
-        checkFileString(address(token), "SDAO", ["symbol"]);
+        checkFileString(address(token), "SDAO", ["name", "symbol"]);
     }
 
     // There are no checkFileString on DssTest, so we need to implement it here.
 
     event File(bytes32 indexed what, string data);
-
-    function checkFileString(address _base, string memory _contractName, string[1] memory _values) internal {
-        string[] memory values = new string[](1);
-        values[0] = _values[0];
-        checkFileString(_base, _contractName, values);
-    }
 
     /// @dev This is forge-only due to event checking
     function checkFileString(address _base, string memory _contractName, string[] memory _values) internal {
@@ -550,6 +543,19 @@ contract SDAOTest is DssTest {
 
         // Reset admin access to what it was
         GodMode.setWard(_base, address(this), ward);
+    }
+
+    function checkFileString(address _base, string memory _contractName, string[1] memory _values) internal {
+        string[] memory values = new string[](1);
+        values[0] = _values[0];
+        checkFileString(_base, _contractName, values);
+    }
+
+    function checkFileString(address _base, string memory _contractName, string[2] memory _values) internal {
+        string[] memory values = new string[](2);
+        values[0] = _values[0];
+        values[1] = _values[1];
+        checkFileString(_base, _contractName, values);
     }
 }
 

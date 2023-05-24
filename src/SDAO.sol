@@ -167,7 +167,7 @@ contract SDAO {
     /**
      * @notice Updates token parameters.
      * @dev There are no mechanisms to prevent governance from changing token parameters more than once.
-     *  We assume that the enforcement will be handle off-chain through governance artifacts.
+     *  We assume that the enforcement will be handled off-chain through governance artifacts.
      * @param what The parameter being changed. One of: "name", "symbol".
      * @param data The updated value for the parameter.
      */

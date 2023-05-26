@@ -5,6 +5,11 @@ script = 'script'
 libs = ['lib']
 solc_version = '0.8.19'
 optimizer = false
+fs_permissions = [
+    { access = "read", path = "./out/" },
+    { access = "read", path = "./script/input/" },
+    { access = "read-write", path = "./script/output/" }
+]
 
 [invariant]
 fail_on_revert = true
@@ -23,3 +28,8 @@ script = 'script-0_6_x'
 libs = ['lib-0_6_x', 'lib']
 solc_version = '0.6.12'
 optimizer = false
+fs_permissions = [
+    { access = "read", path = "./out/" },
+    { access = "read", path = "./script/input/" },
+    { access = "read-write", path = "./script/output/" }
+]

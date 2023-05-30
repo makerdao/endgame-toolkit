@@ -55,6 +55,65 @@ contract LinearRampUp is DistributionCalc {
 
     /**
      * @inheritdoc DistributionCalc
+     * @dev Here is a summary of the mathematical model behind the formula in the code.
+     *
+     * To make sure the total vested amount `V` is distributed by the end of the period, we must ensure that:
+     *       _                        _
+     *      /  clf  -  bgn           /  fin - clf
+     *      |              r dt  =   |            kt  +  s dt
+     *     _/  0                    _/  0
+     *
+     * Where:
+     * - `clf` is the vesting cliff timestamp
+     * - `bgn` is the vesting beginning timestamp
+     * - `fin` is the vesting final timestamp
+     * - `r` is the vesting rate
+     * - `k` is the current distribution rate
+     * - `s` is the starting distribution rate
+     *
+     * Expanding the integrals above, we have:
+     *
+     *                          2
+     *           k (fin  -  clf)
+     *     tot = ----------------  +  s(fin  -  clf)
+     *                   2
+     *
+     * Where:
+     * - `tot = r(fin - bgn)` is the total amount vested.
+     *
+     * Isolating `k` above:
+     *
+     *           2[tot  -  s(fin  -  clf)]
+     *     k  =  -------------------------
+     *                             2
+     *                (fin  -  clf)
+     *
+     * Now we can define the amount distributed `r` at any interval in time `]prev, when]` can be given by:
+     *
+     *                        _                                _
+     *                       /  when  -  clf                  /  prev  -  clf
+     *     r(prev,when)  =   |               kt  +  s dt  -   |               kt  +  s dt
+     *                      _/  0                            _/  0
+     *                        _                                        _       _                                      _
+     *                       |  1                2                      |     |  1              2                      |
+     *     r(prev, when)  =  |  - k(when  -  clf)   +  s(when  -  clf)  |  -  |  - k(prev - clf)   +  s(prev  -  clf)  |
+     *                       |_ 2                                      _|     |_ 2                                    _|
+     *
+     *
+     * Substituting `k` from above and transforming the expression, we can define the max amount to be distributed
+     * between `when` and `prev` as:
+     *
+     *     r(prev, when)  =  tot - s(fin  -  clf)                2                   2
+     *                       -------------------- [(when  -  clf)   -  (prev  -  clf)  ]  +  s(when  -  prev)
+     *                          2 (fin  -  clf)
+     *
+     * We need to tweak the expression above to have divisions as the last step to avoid rounding errors in Solidity:
+     *
+     *                                                                 2                   2                                      2
+     *                       [ tot  -  s(fin  -  clf) ] [(when  -  clf)   -  (prev  -  clf)  ]  +  s (when  -  prev) (fin  -  clf)
+     *     r(prev, when)  =  -----------------------------------------------------------------------------------------------------------
+     *                                                                                  2
+     *                                                                     (fin  -  clf)
      */
     function getMaxAmount(
         uint256 when,

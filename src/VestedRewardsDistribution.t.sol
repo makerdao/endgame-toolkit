@@ -232,6 +232,14 @@ contract VestedRewardsDistributionTest is DssTest {
         k.dist.distribute();
     }
 
+    function testRevertDistributeMoreThanOnceSameBlock() public {
+        skip(l.vestParams.tau / 100);
+        l.dist.distribute();
+
+        vm.expectRevert("VestedRewardsDistribution/no-pending-distribution");
+        l.dist.distribute();
+    }
+
     function testRevertFileInvalidVestId() public {
         vm.expectRevert("VestedRewardsDistribution/invalid-vest-id");
         k.dist.file("vestId", 100);
@@ -272,7 +280,7 @@ contract VestedRewardsDistributionTest is DssTest {
         // We also don't restrict the `vestId` on purpose to check whether `file` will do it or not.
         _setUpVest(k.vest, k.vestParams);
         checkFileUint(address(k.dist), "VestedRewardsDistribution", ["vestId"]);
-        assertEq(k.dist.lastVestedAt(), 0, "`lastVestedAt` not reset");
+        assertEq(k.dist.lastDistributedAt(), 0, "`lastDistributedAt` not reset");
 
         checkFileAddress(address(k.dist), "VestedRewardsDistribution", ["calc"]);
     }

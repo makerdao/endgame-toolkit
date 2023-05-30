@@ -44,8 +44,8 @@ contract VestedRewardsDistribution {
     /// The reason this is not a required constructor parameter is that there is a circular dependency
     /// between this contract and the creation of the vest: the address of this contract must be the vest `usr`.
     uint256 public vestId = INVALID_VEST_ID;
-    /// @notice Tracks the last time a vested amount was claimed.
-    uint256 public lastVestedAt;
+    /// @notice Tracks the last time a distribution was made.
+    uint256 public lastDistributedAt;
 
     /**
      * @dev `usr` was granted owner access.
@@ -154,7 +154,7 @@ contract VestedRewardsDistribution {
         require(dssVest.clf(_vestId) == dssVest.bgn(_vestId), "VestedRewardsDistribution/invalid-vest-cliff");
 
         vestId = _vestId;
-        lastVestedAt = 0;
+        lastDistributedAt = 0;
     }
 
     /**
@@ -174,18 +174,21 @@ contract VestedRewardsDistribution {
 
     /**
      * @notice Distributes the amount of rewards due since the last distribution.
-     * @dev The amount calculation is delegated to `calc.getMaxAmount()`.
-     *  - If the returned value is `0`, the distribution will fail.
-     *  - If the returned value is greater than the current unpaid amount, the distributed amount will the latter.
+     * @dev If the max amount calculation:
+     *  - is `0`, the distribution will fail.
+     *  - is greater than the current unpaid amount, the distributed amount will the latter.
      * @return amount The amount being distributed.
      */
     function distribute() external returns (uint256 amount) {
         require(vestId != INVALID_VEST_ID, "VestedRewardsDistribution/invalid-vest-id");
+        require(block.timestamp > lastDistributedAt, "VestedRewardsDistribution/no-pending-distribution");
 
         uint256 unpaid = dssVest.unpaid(vestId);
         uint256 maxAmount = _getMaxAmount();
-        lastVestedAt = block.timestamp;
+
         dssVest.vest(vestId, maxAmount);
+        // We are ignoring the checks-effects-interactions pattern because `dssVest` is trusted.
+        lastDistributedAt = block.timestamp;
 
         // `dssVest.vest()` sadly does not return the actual amount of vested tokens.
         // Also it is not safe to query the gem balance of this contract because it might have dangling tokens.
@@ -213,8 +216,8 @@ contract VestedRewardsDistribution {
         uint256 fin = dssVest.fin(vestId);
         // We ensure that `clf == bgn`, so we could use either one.
         uint256 clf = dssVest.clf(vestId);
-        // If `lastVestedAt == 0`, it means it this is the first time we call `distribute` for the current `vestId`.
-        uint256 prev = lastVestedAt == 0 ? clf : lastVestedAt;
+        // If `lastDistributedAt == 0`, it means it this is the first time we call `distribute` for the current `vestId`.
+        uint256 prev = lastDistributedAt == 0 ? clf : lastDistributedAt;
 
         return DistributionCalc(calc).getMaxAmount(block.timestamp, prev, tot, fin, clf);
     }

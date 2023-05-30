@@ -254,6 +254,14 @@ contract VestedRewardsDistributionTest is DssTest {
         k.dist.file("vestId", newVestId);
     }
 
+    function testRevertFileInvalidRes() public {
+        address usr = address(0x1337);
+        (uint256 newVestId, ) = _setUpVest(k.vest, usr, false);
+
+        vm.expectRevert("VestedRewardsDistribution/invalid-vest-res");
+        k.dist.file("vestId", newVestId);
+    }
+
     function testAuth() public {
         checkAuth(address(k.dist), "VestedRewardsDistribution");
     }
@@ -262,9 +270,8 @@ contract VestedRewardsDistributionTest is DssTest {
         // `checkFileUint` increaments the current value of the param being modified.
         // Since `vestId` is validated, we need to create a new one to make sure the `file`d param is valid.
         // We also don't restrict the `vestId` on purpose to check whether `file` will do it or not.
-        (uint256 vestId2, ) = _setUpVest(k.vest, k.vestParams, false);
+        _setUpVest(k.vest, k.vestParams);
         checkFileUint(address(k.dist), "VestedRewardsDistribution", ["vestId"]);
-        assertEq(k.vest.res(vestId2), 1, "`vestId` not restricted");
         assertEq(k.dist.lastVestedAt(), 0, "`lastVestedAt` not reset");
 
         checkFileAddress(address(k.dist), "VestedRewardsDistribution", ["calc"]);

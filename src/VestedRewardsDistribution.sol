@@ -144,17 +144,14 @@ contract VestedRewardsDistribution {
      * @notice Updates the `vestId` managed by this contract.
      * @dev The `_vestId` must be valid, in favor of this contract.
      * @dev Vesting streams whose `clf > bgn` are not supported.
-     * @dev If the vest stream is not restricted already, it will be made so.
+     * @dev Unrestricted vesting streams are not supported.
      * @param _vestId The new vest ID.
      */
     function _setVestId(uint256 _vestId) internal {
         require(dssVest.valid(_vestId), "VestedRewardsDistribution/invalid-vest-id");
+        require(dssVest.res(_vestId) == 1, "VestedRewardsDistribution/invalid-vest-res");
         require(dssVest.usr(_vestId) == address(this), "VestedRewardsDistribution/invalid-vest-usr");
         require(dssVest.clf(_vestId) == dssVest.bgn(_vestId), "VestedRewardsDistribution/invalid-vest-cliff");
-
-        if (dssVest.res(_vestId) == 0) {
-            dssVest.restrict(_vestId);
-        }
 
         vestId = _vestId;
         lastVestedAt = 0;

@@ -181,20 +181,13 @@ contract VestedRewardsDistribution {
      */
     function distribute() external returns (uint256 amount) {
         require(vestId != INVALID_VEST_ID, "VestedRewardsDistribution/invalid-vest-id");
-        require(block.timestamp > lastDistributedAt, "VestedRewardsDistribution/no-pending-distribution");
 
-        uint256 unpaid = dssVest.unpaid(vestId);
-        uint256 maxAmount = _getMaxAmount();
-
-        dssVest.vest(vestId, maxAmount);
+        amount = _getAmount();
+        require(amount > 0, "VestedRewardsDistribution/no-pending-amount");
+        dssVest.vest(vestId, amount);
         // We are ignoring the checks-effects-interactions pattern because `dssVest` is trusted.
         lastDistributedAt = block.timestamp;
 
-        // `dssVest.vest()` sadly does not return the actual amount of vested tokens.
-        // Also it is not safe to query the gem balance of this contract because it might have dangling tokens.
-        // The easiest way is to replicate the internal logic of DssVest here.
-        amount = _min(unpaid, maxAmount);
-        require(amount > 0, "VestedRewardsDistribution/no-pending-amount");
         require(gem.transfer(address(stakingRewards), amount), "VestedRewardsDistribution/transfer-failed");
         stakingRewards.notifyRewardAmount(amount);
 
@@ -202,24 +195,37 @@ contract VestedRewardsDistribution {
     }
 
     /**
-     * @notice Gets the max amount to pull from the vesting stream for the next distribution.
+     * @notice Gets the amount to pull from the vesting stream for the current distribution.
      * @dev If `calc` is set, it delegates the calculation to that contract.
-     *      Otherwise, it returns the default amount `type(uint256.max)`.
-     * @return The max amount of tokens.
+     *      Otherwise, it returns the unpaid vested amount.
+     * @return The amount of tokens to pull.
      */
-    function _getMaxAmount() internal view returns (uint256) {
-        if (calc == address(0)) {
-            return type(uint256).max;
+    function _getAmount() internal view returns (uint256) {
+        // We ensured that `clf == bgn`, so we could use either one.
+        uint256 clf = dssVest.clf(vestId);
+        // If the current timestamp is before the cliff, there is nothing to be distriubted.
+        if (block.timestamp < clf) {
+            return 0;
         }
 
-        uint256 tot = dssVest.tot(vestId);
-        uint256 fin = dssVest.fin(vestId);
-        // We ensure that `clf == bgn`, so we could use either one.
-        uint256 clf = dssVest.clf(vestId);
+        uint256 unpaid = dssVest.unpaid(vestId);
+        // If there are no unpaid vested tokens, it should return 0.
+        // Also if there is no calc set, it should get all unpaid vested tokens.
+        if (unpaid == 0 || calc == address(0)) {
+            return unpaid;
+        }
+
         // If `lastDistributedAt == 0`, it means it this is the first time we call `distribute` for the current `vestId`.
         uint256 prev = lastDistributedAt == 0 ? clf : lastDistributedAt;
+        uint256 tot = dssVest.tot(vestId);
+        uint256 fin = dssVest.fin(vestId);
 
-        return DistributionCalc(calc).getMaxAmount(block.timestamp, prev, tot, fin, clf);
+        uint256 maxAmount = DistributionCalc(calc).getMaxAmount(block.timestamp, prev, tot, fin, clf);
+
+        // `dssVest.vest()` sadly does not return the actual amount of vested tokens.
+        // Also it is not safe to query the gem balance of this contract because it might have dangling tokens.
+        // The easiest way is to replicate the internal logic of DssVest to get the exact amount.
+        return _min(unpaid, maxAmount);
     }
 
     /**

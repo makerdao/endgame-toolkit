@@ -253,7 +253,7 @@ contract VestedRewardsDistributionTest is DssTest {
         skip(l.vestParams.tau / 100);
         l.dist.distribute();
 
-        vm.expectRevert("VestedRewardsDistribution/no-pending-distribution");
+        vm.expectRevert("VestedRewardsDistribution/no-pending-amount");
         l.dist.distribute();
     }
 
@@ -302,7 +302,7 @@ contract VestedRewardsDistributionTest is DssTest {
         checkFileAddress(address(k.dist), "VestedRewardsDistribution", ["calc"]);
     }
 
-    function testRegressionDistributeFromMultipleVests() public {
+    function testDistributeFromMultipleVestsRegression() public {
         // 1st vest
         skip(k.vestParams.tau);
 
@@ -376,7 +376,7 @@ contract VestedRewardsDistributionTest is DssTest {
         );
     }
 
-    function testRegressionUnexpectedTokenBalanceOnDistDoesNotMessWithDistribution() public {
+    function testUnexpectedTokenBalanceOnDistDoesNotMessWithDistributionRegression() public {
         // These tokens on the distribution contract should not be distributed.
         l.rewardsToken.mint(address(l.dist), 1_000_000_000 * WAD);
 
@@ -388,6 +388,44 @@ contract VestedRewardsDistributionTest is DssTest {
 
         assertLt(amount, 1_000_000_000 * WAD, "Dangling tokens distributed");
         assertEq(l.rewardsToken.balanceOf(address(l.farm)), amount, "Bad final balance");
+    }
+
+    function testRevertWithReasonWhenDistributeBeforeCliffRegression() public {
+        (uint256 vestId2, ) = _setUpVest(
+            l.vest,
+            VestParams({
+                usr: address(l.dist),
+                tot: l.vestParams.tot / 2,
+                bgn: block.timestamp + 1 days, // start in the future
+                tau: l.vestParams.tau, // 1 year duration
+                eta: 0 // No cliff; start at bgn
+            })
+        );
+        l.dist.file("vestId", vestId2);
+
+        // Exactly at the cliff timestamp there should be no tokens to distribute
+        skip(1 days);
+        vm.expectRevert("VestedRewardsDistribution/no-pending-amount");
+        l.dist.distribute();
+
+        // ---------
+
+        (uint256 vestId3, ) = _setUpVest(
+            k.vest,
+            VestParams({
+                usr: address(k.dist),
+                tot: k.vestParams.tot / 2,
+                bgn: block.timestamp + 1 days, // start in the future
+                tau: k.vestParams.tau, // 1 year duration
+                eta: 0 // No cliff; start at bgn
+            })
+        );
+        k.dist.file("vestId", vestId3);
+
+        // Exactly at the cliff timestamp there should be no tokens to distribute
+        skip(1 days);
+        vm.expectRevert("VestedRewardsDistribution/no-pending-amount");
+        k.dist.distribute();
     }
 
     function _setUpDistributionParams(

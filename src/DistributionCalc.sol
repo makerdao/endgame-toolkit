@@ -128,7 +128,7 @@ contract LinearRampUp is DistributionCalc {
         uint256 divisor = duration ** 2;
 
         return
-            ((tot - startingRate * duration) *
+            ((tot - (startingRate * duration)) *
                 ((when - clf) ** 2 - (prev - clf) ** 2) +
                 (startingRate * interval * divisor)) / (divisor);
     }

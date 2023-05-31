@@ -83,18 +83,18 @@ contract LinearRampUp is DistributionCalc {
      *
      * Isolating `k` above:
      *
-     *           2[tot  -  s(fin  -  clf)]
-     *     k  =  -------------------------
+     *           2 [tot  -  s(fin  -  clf)]
+     *     k  =  --------------------------
      *                             2
      *                (fin  -  clf)
      *
      * Now we can define the amount distributed `r` at any interval in time `]prev, when]` can be given by:
      *
-     *                        _                                _
-     *                       /  when  -  clf                  /  prev  -  clf
-     *     r(prev,when)  =   |               kt  +  s dt  -   |               kt  +  s dt
-     *                      _/  0                            _/  0
-     *                        _                                        _       _                                      _
+     *                        _                               _
+     *                       /  when - clf                   /  prev - clf
+     *     r(prev,when)  =   |              kt  +  s dt  -   |              kt  +  s dt
+     *                      _/  0                           _/  0
+     *                        _                                       _       _                                      _
      *                       |  1                2                      |     |  1              2                      |
      *     r(prev, when)  =  |  - k(when  -  clf)   +  s(when  -  clf)  |  -  |  - k(prev - clf)   +  s(prev  -  clf)  |
      *                       |_ 2                                      _|     |_ 2                                    _|
@@ -105,7 +105,8 @@ contract LinearRampUp is DistributionCalc {
      *
      *     r(prev, when)  =  tot - s(fin  -  clf)                2                   2
      *                       -------------------- [(when  -  clf)   -  (prev  -  clf)  ]  +  s(when  -  prev)
-     *                          2 (fin  -  clf)
+     *                                       2
+     *                          (fin  -  clf)
      *
      * We need to tweak the expression above to have divisions as the last step to avoid rounding errors in Solidity:
      *

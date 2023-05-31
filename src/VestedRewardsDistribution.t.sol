@@ -48,10 +48,11 @@ contract VestedRewardsDistributionTest is DssTest {
     DistributionParams k;
     DistributionParams l;
 
-    uint256 constant DEFAULT_TOTAL_REWARDS = 12_000_000 * WAD;
     uint256 constant DEFAULT_DURATION = 365 days;
     uint256 constant DEFAULT_CLIFF = 0;
-    uint256 constant DEFAULT_STARTING_RATE = uint256(100_000 * WAD) / DEFAULT_DURATION;
+    uint256 constant DEFAULT_STARTING_RATE = uint256(200_000 * WAD) / DEFAULT_DURATION;
+    uint256 constant DEFAULT_FINAL_RATE = uint256(2_000_000 * WAD) / DEFAULT_DURATION;
+    uint256 constant DEFAULT_TOTAL_REWARDS = ((DEFAULT_STARTING_RATE + DEFAULT_FINAL_RATE) * DEFAULT_DURATION) / 2;
 
     function setUp() public {
         // DssVest checks if params are not too far away in the future or in the past relative to `block.timestamp`.
@@ -177,7 +178,7 @@ contract VestedRewardsDistributionTest is DssTest {
         assertApproxEqRel(l.rewardsToken.balanceOf(address(l.farm)), l.vestParams.tot, tolerance);
     }
 
-    function testDistributeLinearRampUpEverIncreasingFuzz(uint256 totalDistributions) public {
+    function testDistributeLinearRampUpLinearityFuzz(uint256 totalDistributions) public {
         // Anything between 1 per week and 1 per month.
         totalDistributions = (bound(totalDistributions, 12, 52) * l.vestParams.tau) / 365 days;
         // Make distributions uniformly spread across time
@@ -196,17 +197,25 @@ contract VestedRewardsDistributionTest is DssTest {
             deltas[i - 1] = balances[i] - balances[i - 1];
         }
 
-        // Check if balance grows faster every time:
+        uint256[] memory deltaChanges = new uint256[](deltas.length - 1);
         for (uint256 i = 1; i < deltas.length; i++) {
-            assertGt(
-                deltas[i],
-                deltas[i - 1],
+            deltaChanges[i - 1] = deltas[i] - deltas[i - 1];
+        }
+
+        // Allow for 0,01% error tolerance due to rounding errors.
+        uint256 tolerance = 0.0001e18;
+
+        for (uint256 i = 1; i < deltaChanges.length; i++) {
+            // Check if balance of the farm contract grew linearly every time.
+            assertApproxEqRel(
+                deltaChanges[i],
+                deltaChanges[i - 1],
+                tolerance,
                 string.concat("Bad balance change between #", toString(i - 1), " and #", toString(i))
             );
         }
 
-        // Check the final balance. Allow for 0,01% error tolerance due to rounding errors.
-        uint256 tolerance = 0.0001e18;
+        // Check the final balance.
         assertApproxEqRel(l.rewardsToken.balanceOf(address(l.farm)), l.vestParams.tot, tolerance);
     }
 

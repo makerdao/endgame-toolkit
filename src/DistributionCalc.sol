@@ -124,12 +124,20 @@ contract LinearRampUp is DistributionCalc {
         uint256 clf
     ) external view returns (uint256) {
         uint256 duration = fin - clf;
+        uint256 constantComponent = startingRate * duration;
+        // When this condition is not met, the linear coeficient of the distribution would be negative.
+        // This is most likely an indicator that the total vested amount was not properly set.
+        require(tot >= constantComponent, "LinearRampUp/starting-rate-too-high");
+
         uint256 interval = when - prev;
         uint256 divisor = duration ** 2;
+        uint256 increasingComponent;
+        unchecked {
+            // This is guaranteed to not overflow due to the require statement above.
+            increasingComponent = tot - constantComponent;
+        }
 
-        return
-            ((tot - (startingRate * duration)) *
-                ((when - clf) ** 2 - (prev - clf) ** 2) +
-                (startingRate * interval * divisor)) / (divisor);
+        return ((increasingComponent * ((when - clf) ** 2 - (prev - clf) ** 2) + (startingRate * interval * divisor)) /
+            divisor);
     }
 }

@@ -182,6 +182,15 @@ contract VestedRewardsDistributionTest is DssTest {
         assertApproxEqRel(l.rewardsToken.balanceOf(address(l.farm)), l.vestParams.tot, tolerance);
     }
 
+    function testRevertDistributeLinearRampUpStartingRateTooHigh() public {
+        l.dist.file("calc", address(new LinearRampUp(DEFAULT_STARTING_RATE * 100_000_000)));
+
+        skip(l.vestParams.tau);
+
+        vm.expectRevert("LinearRampUp/starting-rate-too-high");
+        l.dist.distribute();
+    }
+
     function testDistributeLinearRampUpLinearityFuzz(uint256 totalDistributions) public {
         // Anything between 1 per week and 1 per month.
         totalDistributions = (bound(totalDistributions, 12, 52) * l.vestParams.tau) / 365 days;

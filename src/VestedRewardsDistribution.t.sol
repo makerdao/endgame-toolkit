@@ -162,6 +162,10 @@ contract VestedRewardsDistributionTest is DssTest {
         }
 
         assertApproxEqRel(k.rewardsToken.balanceOf(address(k.farm)), k.vestParams.tot, tolerance);
+
+        skip(365 days);
+        // Check if the amount undistributed is less than 0.001% of the total
+        assertLe(k.vest.unpaid(l.vestId), k.vestParams.tot / 10000);
     }
 
     function testDistributeLinearRampUp() public {
@@ -217,6 +221,10 @@ contract VestedRewardsDistributionTest is DssTest {
 
         // Check the final balance.
         assertApproxEqRel(l.rewardsToken.balanceOf(address(l.farm)), l.vestParams.tot, tolerance);
+
+        skip(365 days);
+        // Check if the amount undistributed is less than 0.001% of the total
+        assertLe(l.vest.unpaid(l.vestId), l.vestParams.tot / 10000);
     }
 
     function testRevertDistributeInvalidVestId() public {

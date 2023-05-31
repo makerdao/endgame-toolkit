@@ -187,7 +187,7 @@ contract VestedRewardsDistributionTest is DssTest {
 
         skip(l.vestParams.tau);
 
-        vm.expectRevert("LinearRampUp/starting-rate-too-high");
+        vm.expectRevert("LinearRampUp/total-vesting-too-low");
         l.dist.distribute();
     }
 

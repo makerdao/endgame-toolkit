@@ -57,11 +57,14 @@ contract LinearRampUp is DistributionCalc {
      * @inheritdoc DistributionCalc
      * @dev Here is a summary of the mathematical model behind the formula in the code.
      *
-     * To make sure the total vested amount `V` is distributed by the end of the period, we must ensure that:
+     * To make sure the total vested amount `tot` is distributed by the end of the period, we must ensure that:
+     *
+     * ```
      *       _                        _
      *      /  clf  -  bgn           /  fin - clf
      *      |              r dt  =   |            kt  +  s dt
      *     _/  0                    _/  0
+     * ```
      *
      * Where:
      * - `clf` is the vesting cliff timestamp
@@ -73,48 +76,96 @@ contract LinearRampUp is DistributionCalc {
      *
      * Expanding the integrals above, we have:
      *
+     * ```
      *                          2
      *           k (fin  -  clf)
      *     tot = ----------------  +  s(fin  -  clf)
      *                   2
+     * ```
      *
      * Where:
      * - `tot = r(fin - bgn)` is the total amount vested.
      *
      * Isolating `k` above:
      *
+     * ```
      *           2 [tot  -  s(fin  -  clf)]
      *     k  =  --------------------------
      *                             2
      *                (fin  -  clf)
+     * ```
      *
      * Now we can define the amount distributed `r` at any interval in time `]prev, when]` can be given by:
      *
+     * ```
      *                        _                               _
      *                       /  when - clf                   /  prev - clf
      *     r(prev,when)  =   |              kt  +  s dt  -   |              kt  +  s dt
      *                      _/  0                           _/  0
-     *                        _                                       _       _                                      _
+     *                        _                                        _       _                                      _
      *                       |  1                2                      |     |  1              2                      |
      *     r(prev, when)  =  |  - k(when  -  clf)   +  s(when  -  clf)  |  -  |  - k(prev - clf)   +  s(prev  -  clf)  |
      *                       |_ 2                                      _|     |_ 2                                    _|
+     * ```
      *
      *
      * Substituting `k` from above and transforming the expression, we can define the max amount to be distributed
      * between `when` and `prev` as:
      *
+     * ```
      *     r(prev, when)  =  tot - s(fin  -  clf)                2                   2
      *                       -------------------- [(when  -  clf)   -  (prev  -  clf)  ]  +  s(when  -  prev)
      *                                       2
      *                          (fin  -  clf)
+     * ```
      *
      * We need to tweak the expression above to have divisions as the last step to avoid rounding errors in Solidity:
      *
+     * ```
      *                                                                 2                   2                                      2
      *                       [ tot  -  s(fin  -  clf) ] [(when  -  clf)   -  (prev  -  clf)  ]  +  s (when  -  prev) (fin  -  clf)
-     *     r(prev, when)  =  -----------------------------------------------------------------------------------------------------------
-     *                                                                                  2
-     *                                                                     (fin  -  clf)
+     *     r(prev, when)  =  ------------------------------------------------------------------------------------------------------
+     *                                                                                2
+     *                                                                   (fin  -  clf)
+     * ```
+     *
+     * ---
+     *
+     * Now lets consider that a linear ramp-up distribution can be split into 2 parts:
+     *
+     * ```
+     *     ┤                                                         ╭──────────
+     *     ┤                                              ╭──────────╯||||||||||
+     *     ┤                                    ╭─────────╯|||||||||||||||||||||
+     *     ┤                         ╭──────────╯|||||||||||||||||||||||||||||||
+     *     ┤               ╭─────────╯||||||||||||||||||||||||||||||||||||||||||
+     *     ┤           ╭───╯||||||||||||||||||||||||||||||||||||||||||||||||||||
+     *   s ┤- - - - - -│XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+     *     ┤           │XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+     *     ┤           │XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+     *     ┼───────────╯XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+     *                clf                                                     fin
+     *                  \______________________________________________________/
+     *                                           v
+     *                                        duration
+     * ```
+     *
+     * From the chart above:
+     * - `constantAcc` is the area hatched with "X", given by `s * duration`.
+     * - `linearAcc` is the area hatched with "|".
+     * - `tot` is the total amount to be distributed, given by `constantComponet + linearAcc`.
+     *
+     * Notice that in order for the distribution to be possible, the following condition must hold true:
+     *
+     * ```
+     *     tot >= constantComponet
+     * ```
+     *
+     * Otherwise the linear coeficient of the distribution would have to be negative. When this happens, it most likely
+     * means that the total vesting amount was not properly set.
+     *
+     * In the special case where `tot == constantAcc`, the linear ramp-up distribution degrades into a constant
+     * distribution with rate `s`.
      */
     function getMaxAmount(
         uint256 when,
@@ -124,20 +175,17 @@ contract LinearRampUp is DistributionCalc {
         uint256 clf
     ) external view returns (uint256) {
         uint256 duration = fin - clf;
-        uint256 constantComponent = startingRate * duration;
-        // When this condition is not met, the linear coeficient of the distribution would be negative.
-        // This is most likely an indicator that the total vested amount was not properly set.
-        require(tot >= constantComponent, "LinearRampUp/starting-rate-too-high");
+        uint256 constantAcc = startingRate * duration;
+        require(tot >= constantAcc, "LinearRampUp/total-vesting-too-low");
 
         uint256 interval = when - prev;
         uint256 divisor = duration ** 2;
-        uint256 increasingComponent;
+        uint256 linearAcc;
         unchecked {
             // This is guaranteed to not overflow due to the require statement above.
-            increasingComponent = tot - constantComponent;
+            linearAcc = tot - constantAcc;
         }
 
-        return ((increasingComponent * ((when - clf) ** 2 - (prev - clf) ** 2) + (startingRate * interval * divisor)) /
-            divisor);
+        return (linearAcc * ((when - clf) ** 2 - (prev - clf) ** 2) + (startingRate * interval * divisor)) / divisor;
     }
 }

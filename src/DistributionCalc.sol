@@ -191,12 +191,12 @@ contract LinearRampUp is DistributionCalc {
      * From the chart above:
      * - `constantAcc` is the area hatched with "X", given by `s * duration`.
      * - `linearAcc` is the area hatched with "O".
-     * - `tot` is the total amount to be distributed, given by `constantComponet + linearAcc`.
+     * - `tot` is the total amount to be distributed, given by `constantAcc + linearAcc`.
      *
      * Notice that in order for the distribution to be possible, the following condition must hold true:
      *
      * ```
-     *     tot >= constantComponet
+     *     tot >= constantAcc
      * ```
      *
      * Otherwise the linear coeficient of the distribution would have to be negative. When this happens, it most likely

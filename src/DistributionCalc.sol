@@ -57,11 +57,47 @@ contract LinearRampUp is DistributionCalc {
      * @inheritdoc DistributionCalc
      * @dev Here is a summary of the mathematical model behind the formula in the code.
      *
+     * A linear ramp-up distribution looks like the following chart:
+     *
+     * ```
+     *   rate
+     *
+     *     ┤                                                         ╭─────────+
+     *     ┤                                              ╭──────────╯         |
+     *     ┤                                    ╭─────────╯                    |
+     *     ┤                         ╭──────────╯                              |
+     *     ┤               ╭─────────╯                                         |
+     *   s ┤- - - - - -+───╯                                                   |
+     *     ┤           |                                                       |
+     *     ┤           |                                                       |
+     *     ┤           |                                                       |
+     *     ┼───────────+───────────────────────────────────────────────────────+─ time
+     *                clf                                                     fin
+     * ```
+     *
+     * A `DssVest` stream can be represented like:
+     *
+     * ```
+     *   rate
+     *
+     *     ┤
+     *     ┤
+     *     ┤
+     *   r ┤- - - - - -+───────────────────────────────────────────────────────+
+     *     ┤           |                                                       |
+     *     ┤           |                                                       |
+     *     ┤           |                         tot                           |
+     *     ┤           |                                                       |
+     *     ┤           |                                                       |
+     *     ┼───────────+───────────────────────────────────────────────────────+─ time
+     *             bgn = clf                                                  fin
+     * ```
+     *
      * To make sure the total vested amount `tot` is distributed by the end of the period, we must ensure that:
      *
      * ```
      *       _                        _
-     *      /  clf  -  bgn           /  fin - clf
+     *      /  fin  -  clf           /  fin - clf
      *      |              r dt  =   |            kt  +  s dt
      *     _/  0                    _/  0
      * ```
@@ -71,7 +107,7 @@ contract LinearRampUp is DistributionCalc {
      * - `bgn` is the vesting beginning timestamp
      * - `fin` is the vesting final timestamp
      * - `r` is the vesting rate
-     * - `k` is the current distribution rate
+     * - `k` is the current distribution rate linear factor
      * - `s` is the starting distribution rate
      *
      * Expanding the integrals above, we have:
@@ -134,16 +170,18 @@ contract LinearRampUp is DistributionCalc {
      * Now lets consider that a linear ramp-up distribution can be split into 2 parts:
      *
      * ```
-     *     ┤                                                         ╭──────────
-     *     ┤                                              ╭──────────╯||||||||||
-     *     ┤                                    ╭─────────╯|||||||||||||||||||||
-     *     ┤                         ╭──────────╯|||||||||||||||||||||||||||||||
-     *     ┤               ╭─────────╯||||||||||||||||||||||||||||||||||||||||||
-     *     ┤           ╭───╯||||||||||||||||||||||||||||||||||||||||||||||||||||
-     *   s ┤- - - - - -│XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-     *     ┤           │XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-     *     ┤           │XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-     *     ┼───────────╯XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+     *   rate
+     *
+     *     ┤                                                         ╭─────────+
+     *     ┤                                              ╭──────────╯OOOOOOOOO|
+     *     ┤                                    ╭─────────╯OOOOOOOOOOOOOOOOOOOO|
+     *     ┤                         ╭──────────╯OOOOOOOOOOOOOOOOOOOOOOOOOOOOOO|
+     *     ┤               ╭─────────╯OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO|
+     *   s ┤- - - - - -+───╯OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO|
+     *     ┤           |XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX|
+     *     ┤           |XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX|
+     *     ┤           |XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX|
+     *     ┼───────────+───────────────────────────────────────────────────────+── time
      *                clf                                                     fin
      *                  \______________________________________________________/
      *                                           v
@@ -152,7 +190,7 @@ contract LinearRampUp is DistributionCalc {
      *
      * From the chart above:
      * - `constantAcc` is the area hatched with "X", given by `s * duration`.
-     * - `linearAcc` is the area hatched with "|".
+     * - `linearAcc` is the area hatched with "O".
      * - `tot` is the total amount to be distributed, given by `constantComponet + linearAcc`.
      *
      * Notice that in order for the distribution to be possible, the following condition must hold true:

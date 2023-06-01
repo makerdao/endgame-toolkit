@@ -184,9 +184,9 @@ contract VestedRewardsDistribution {
 
         amount = _getAmount();
         require(amount > 0, "VestedRewardsDistribution/no-pending-amount");
-        dssVest.vest(vestId, amount);
-        // We are ignoring the checks-effects-interactions pattern because `dssVest` is trusted.
+
         lastDistributedAt = block.timestamp;
+        dssVest.vest(vestId, amount);
 
         require(gem.transfer(address(stakingRewards), amount), "VestedRewardsDistribution/transfer-failed");
         stakingRewards.notifyRewardAmount(amount);
@@ -198,16 +198,9 @@ contract VestedRewardsDistribution {
      * @notice Gets the amount to pull from the vesting stream for the current distribution.
      * @dev If `calc` is set, it delegates the calculation to that contract.
      *      Otherwise, it returns the unpaid vested amount.
-     * @return The amount of tokens to pull.
+     * @return The amount of tokens to distribute.
      */
     function _getAmount() internal view returns (uint256) {
-        // We ensured that `clf == bgn`, so we could use either one.
-        uint256 clf = dssVest.clf(vestId);
-        // If the current timestamp is before the cliff, there is nothing to be distriubted.
-        if (block.timestamp < clf) {
-            return 0;
-        }
-
         uint256 unpaid = dssVest.unpaid(vestId);
         // If there are no unpaid vested tokens, it should return 0.
         // Also if there is no calc set, it should get all unpaid vested tokens.
@@ -215,6 +208,7 @@ contract VestedRewardsDistribution {
             return unpaid;
         }
 
+        uint256 clf = dssVest.clf(vestId);
         // If `lastDistributedAt == 0`, it means it this is the first time we call `distribute` for the current `vestId`.
         uint256 prev = lastDistributedAt == 0 ? clf : lastDistributedAt;
         uint256 tot = dssVest.tot(vestId);

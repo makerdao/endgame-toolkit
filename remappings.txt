@@ -1,0 +1,6 @@
+ds-test/=lib/forge-std/lib/ds-test/src/
+dss-interfaces/=lib/dss-test/lib/dss-interfaces/src/
+dss-test/=lib/dss-test/src/
+forge-std/=lib/forge-std/src/
+openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/
+dss-vest/=lib-0_6_x/dss-vest/src/

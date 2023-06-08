@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: © 2017, 2018, 2019 dbrock, rain, mrchico
-// SPDX-FileCopyrightText: © 2023 SDAO Foundation <www.sdaofoundation.org>
+// SPDX-FileCopyrightText: © 2023 Dai Foundation <www.daifoundation.org>
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,7 +14,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-pragma solidity =0.8.19;
+pragma solidity 0.8.19;
 
 /// @dev Smart Contract signature validation interface.
 interface IERC1271 {

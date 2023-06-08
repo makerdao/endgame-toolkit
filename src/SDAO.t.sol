@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: © 2023 SDAO Foundation <www.sdaofoundation.org>
+// SPDX-FileCopyrightText: © 2023 Dai Foundation <www.daifoundation.org>
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
 // This program is free software: you can redistribute it and/or modify
@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-pragma solidity =0.8.19;
+pragma solidity 0.8.19;
 
 import {TokenFuzzTests} from "token-tests/TokenFuzzTests.sol";
 import {DssTest} from "dss-test/DssTest.sol";
@@ -26,17 +26,21 @@ import {SDAO} from "./SDAO.sol";
  */
 contract SDAOTest is TokenFuzzTests {
     SDAO token;
+    BalanceSum balanceSum;
 
     function setUp() public {
         token = new SDAO("Token", "TKN");
-
         _token_ = address(token);
         _tokenName_ ="Token";
         _contractName_ = "SDAO";
         _symbol_ = "TKN";
     }
 
-    function invariantMetadata() public {
+    function invariantBalanceSum() public {
+        assertEq(token.totalSupply(), balanceSum.sum());
+    }
+
+    function testMetadata() public {
         assertEq(token.name(), "Token");
         assertEq(token.symbol(), "TKN");
         assertEq(token.decimals(), 18);
@@ -57,122 +61,38 @@ contract SDAOTest is TokenFuzzTests {
     function testFile() public {
         checkFileString(address(token), "SDAO", ["name", "symbol"]);
     }
-
-    // There are no checkFileString on DssTest, so we need to implement it here.
-
-    event File(bytes32 indexed what, string data);
-
-    /// @dev This is forge-only due to event checking
-    function checkFileString(address _base, string memory _contractName, string[] memory _values) internal {
-        FileStringLike base = FileStringLike(_base);
-        uint256 ward = base.wards(address(this));
-
-        // Ensure we have admin access
-        GodMode.setWard(_base, address(this), 1);
-
-        // First check an invalid value
-        vm.expectRevert(abi.encodePacked(_contractName, "/file-unrecognized-param"));
-        base.file("an invalid value", "");
-
-        // Next check each value is valid and updates the target storage slot
-        for (uint256 i = 0; i < _values.length; i++) {
-            string memory value = _values[i];
-            bytes32 valueB32;
-            assembly {
-                valueB32 := mload(add(value, 32))
-            }
-
-            // Read original value
-            (bool success, bytes memory result) = _base.call(
-                abi.encodeWithSignature(string(abi.encodePacked(value, "()")))
-            );
-            assertTrue(success);
-            string memory origData = abi.decode(result, (string));
-            string memory newData;
-            newData = string.concat(newData, " - NEW");
-
-            // Update value
-            vm.expectEmit(true, false, false, true);
-            emit File(valueB32, newData);
-            base.file(valueB32, newData);
-
-            // Confirm it was updated successfully
-            (success, result) = _base.call(abi.encodeWithSignature(string(abi.encodePacked(value, "()"))));
-            assertTrue(success);
-            string memory data = abi.decode(result, (string));
-            assertEq(data, newData);
-
-            // Reset value to original
-            vm.expectEmit(true, false, false, true);
-            emit File(valueB32, origData);
-            base.file(valueB32, origData);
-        }
-
-        // Finally check that file is authed
-        base.deny(address(this));
-        vm.expectRevert(abi.encodePacked(_contractName, "/not-authorized"));
-        base.file("some value", "");
-
-        // Reset admin access to what it was
-        GodMode.setWard(_base, address(this), ward);
-    }
-
-    function checkFileString(address _base, string memory _contractName, string[1] memory _values) internal {
-        string[] memory values = new string[](1);
-        values[0] = _values[0];
-        checkFileString(_base, _contractName, values);
-    }
-
-    function checkFileString(address _base, string memory _contractName, string[2] memory _values) internal {
-        string[] memory values = new string[](2);
-        values[0] = _values[0];
-        values[1] = _values[1];
-        checkFileString(_base, _contractName, values);
-    }
 }
 
-interface AuthLike {
-    function wards(address) external view returns (uint256);
-
-    function rely(address) external;
-
-    function deny(address) external;
-}
-
-interface FileStringLike is AuthLike {
-    function file(bytes32, string memory) external;
-}
-
-contract SDAOInvariants is DssTest {
-    BalanceSum balanceSum;
-    SDAO token;
-
-    function setUp() public {
-        token = new SDAO("Token", "TKN");
-        balanceSum = new BalanceSum(token);
-    }
-
-    function invariantBalanceSum() public {
-        assertEq(token.totalSupply(), balanceSum.sum());
-    }
-}
-
-contract BalanceSum {
-    SDAO token;
+contract BalanceSum is DssTest {
+    SDAO public token;
     uint256 public sum;
 
     constructor(SDAO _token) {
         token = _token;
     }
 
-    function mint(address from, uint256 amount) public {
-        token.mint(from, amount);
+    function mint(address to, uint256 amount) public {
+        // We cannot use vm.assume() because it causes the call to fail.
+        if (to == address(0) || to == address(token)) return;
+
+        amount = bound(amount, 1, type(uint248).max);
+
+        token.mint(to, amount);
         sum += amount;
     }
 
-    function burn(address from, uint256 amount) public {
-        token.burn(from, amount);
-        sum -= amount;
+    function burn(address from, uint256 mintedAmount, uint256 burntAmount) public {
+        if (from == address(0) || from == address(token)) return;
+
+        mintedAmount = bound(mintedAmount, 1, type(uint248).max);
+        burntAmount = bound(burntAmount, 1, mintedAmount);
+
+        token.mint(from, mintedAmount);
+        sum += mintedAmount;
+
+        vm.prank(address(from));
+        token.burn(from, burntAmount);
+        sum -= burntAmount;
     }
 
     function approve(address to, uint256 amount) public {
@@ -180,10 +100,28 @@ contract BalanceSum {
     }
 
     function transferFrom(address from, address to, uint256 amount) public {
+        if (to == address(0) || to == address(token)) return;
+        if (from == address(0) || from == address(token)) return;
+
+        amount = bound(amount, 1, type(uint248).max);
+
+        token.mint(from, amount);
+        sum += amount;
+
+        vm.prank(from);
+        token.approve(address(this), amount);
+
         token.transferFrom(from, to, amount);
     }
 
     function transfer(address to, uint256 amount) public {
+        if (to == address(0) || to == address(token)) return;
+
+        amount = bound(amount, 1, type(uint248).max);
+
+        token.mint(address(this), amount);
+        sum += amount;
+
         token.transfer(to, amount);
     }
 }

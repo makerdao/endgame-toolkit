@@ -7,3 +7,9 @@
 [submodule "lib/token-tests"]
 	path = lib/token-tests
 	url = https://github.com/makerdao/token-tests
+[submodule "lib/openzeppelin-contracts"]
+	path = lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "lib-0_6_x/dss-vest"]
+	path = lib-0_6_x/dss-vest
+	url = https://github.com/makerdao/dss-vest.git

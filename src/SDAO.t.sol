@@ -25,37 +25,29 @@ import {SDAO} from "./SDAO.sol";
  * https://github.com/transmissions11/solmate/blob/2001af43aedb46fdc2335d2a7714fb2dae7cfcd1/src/test/ERC20.t.sol
  */
 contract SDAOTest is TokenFuzzTests {
-    SDAO token;
-    BalanceSum balanceSum;
+    SDAO internal token;
+    BalanceSum internal balanceSum;
 
     function setUp() public {
         token = new SDAO("Token", "TKN");
         _token_ = address(token);
-        _tokenName_ ="Token";
+        _tokenName_ = "Token";
         _contractName_ = "SDAO";
         _symbol_ = "TKN";
+
+        balanceSum = new BalanceSum(token);
+        token.rely(address(balanceSum));
+        excludeSender(address(0));
+        targetContract(address(balanceSum));
     }
 
     function invariantBalanceSum() public {
         assertEq(token.totalSupply(), balanceSum.sum());
     }
 
-    function testMetadata() public {
-        assertEq(token.name(), "Token");
-        assertEq(token.symbol(), "TKN");
-        assertEq(token.decimals(), 18);
-    }
-
     function testRevertFileUnsupportedMetadata() public {
         vm.expectRevert("SDAO/file-unrecognized-param");
         token.file("decimals", "18");
-    }
-
-    function testMetadataFuzz(string calldata name, string calldata symbol) public {
-        SDAO tkn = new SDAO(name, symbol);
-        assertEq(tkn.name(), name);
-        assertEq(tkn.symbol(), symbol);
-        assertEq(tkn.decimals(), 18);
     }
 
     function testFile() public {
@@ -64,7 +56,7 @@ contract SDAOTest is TokenFuzzTests {
 }
 
 contract BalanceSum is DssTest {
-    SDAO public token;
+    SDAO internal token;
     uint256 public sum;
 
     constructor(SDAO _token) {

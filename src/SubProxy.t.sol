@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-pragma solidity =0.8.19;
+pragma solidity 0.8.19;
 
 import {DssTest} from "dss-test/DssTest.sol";
 import {SubProxy} from "./SubProxy.sol";

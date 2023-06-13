@@ -18,7 +18,6 @@ pragma solidity 0.8.19;
 import {IStakingRewards} from "./synthetix/interfaces/IStakingRewards.sol";
 import {DssVestWithGemLike} from "./interfaces/DssVestWithGemLike.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
-import {DistributionCalc} from "./DistributionCalc.sol";
 
 /**
  * @title RwardsDistribution: A permissionless bridge between {DssVest} and {StakingRewards}.
@@ -34,8 +33,6 @@ contract VestedRewardsDistribution {
     IStakingRewards public immutable stakingRewards;
     /// @notice Token in which rewards are being paid.
     IERC20 public immutable gem;
-    /// @notice Optional custom distribution schedule strategy
-    address public calc;
 
     /// @dev Vest IDs are sequential, but they are incremented before usage, meaning `0` is not a valid vest ID.
     uint256 internal constant INVALID_VEST_ID = 0;
@@ -64,12 +61,6 @@ contract VestedRewardsDistribution {
      */
     event File(bytes32 indexed what, uint256 data);
     /**
-     * @notice A contract parameter was updated.
-     * @param what The changed parameter name. Currently the supported values are: "calc"
-     * @param data The new value of the parameter.
-     */
-    event File(bytes32 indexed what, address data);
-    /**
      * @notice A distribution of tokens was made.
      * @param amount The total tokens in the current distribution.
      */
@@ -82,12 +73,10 @@ contract VestedRewardsDistribution {
 
     /**
      * @dev The token `gem` used in DssVest must be the same as `rewardsToken` in StakingRewards.
-     * @dev If `_calc == address(0)` the distribution schedule will mirror the vesting schedule.
      * @param _dssVest The DssVest instance as the source of the funds.
      * @param _stakingRewards The farming contract.
-     * @param _calc Optional strategy for custom rewards distribution schedule.
      */
-    constructor(address _dssVest, address _stakingRewards, address _calc) {
+    constructor(address _dssVest, address _stakingRewards) {
         address _gem = DssVestWithGemLike(_dssVest).gem();
         require(
             _gem == address(IStakingRewards(_stakingRewards).rewardsToken()),
@@ -97,9 +86,6 @@ contract VestedRewardsDistribution {
         dssVest = DssVestWithGemLike(_dssVest);
         stakingRewards = IStakingRewards(_stakingRewards);
         gem = IERC20(_gem);
-
-        calc = _calc;
-        emit File("calc", _calc);
 
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
@@ -158,31 +144,13 @@ contract VestedRewardsDistribution {
     }
 
     /**
-     * @notice Updates a contract parameter.
-     * @param what The changed parameter name. `"calc"
-     * @param data The new value of the parameter.
-     */
-    function file(bytes32 what, address data) external auth {
-        if (what == "calc") {
-            calc = data;
-        } else {
-            revert("VestedRewardsDistribution/file-unrecognized-param");
-        }
-
-        emit File(what, data);
-    }
-
-    /**
      * @notice Distributes the amount of rewards due since the last distribution.
-     * @dev If the max amount calculation:
-     *  - is `0`, the distribution will fail.
-     *  - is greater than the current unpaid amount, the distributed amount will the latter.
      * @return amount The amount being distributed.
      */
     function distribute() external returns (uint256 amount) {
         require(vestId != INVALID_VEST_ID, "VestedRewardsDistribution/invalid-vest-id");
 
-        amount = _getAmount();
+        amount = dssVest.unpaid(vestId);
         require(amount > 0, "VestedRewardsDistribution/no-pending-amount");
 
         lastDistributedAt = block.timestamp;
@@ -192,34 +160,6 @@ contract VestedRewardsDistribution {
         stakingRewards.notifyRewardAmount(amount);
 
         emit Distribute(amount);
-    }
-
-    /**
-     * @notice Gets the amount to pull from the vesting stream for the current distribution.
-     * @dev If `calc` is set, it delegates the calculation to that contract.
-     *      Otherwise, it returns the unpaid vested amount.
-     * @return The amount of tokens to distribute.
-     */
-    function _getAmount() internal view returns (uint256) {
-        uint256 unpaid = dssVest.unpaid(vestId);
-        // If there are no unpaid vested tokens, it should return 0.
-        // Also if there is no calc set, it should get all unpaid vested tokens.
-        if (unpaid == 0 || calc == address(0)) {
-            return unpaid;
-        }
-
-        uint256 clf = dssVest.clf(vestId);
-        // If `lastDistributedAt == 0`, it means it this is the first time we call `distribute` for the current `vestId`.
-        uint256 prev = lastDistributedAt == 0 ? clf : lastDistributedAt;
-        uint256 tot = dssVest.tot(vestId);
-        uint256 fin = dssVest.fin(vestId);
-
-        uint256 maxAmount = DistributionCalc(calc).getMaxAmount(block.timestamp, prev, tot, fin, clf);
-
-        // `dssVest.vest()` sadly does not return the actual amount of vested tokens.
-        // Also it is not safe to query the gem balance of this contract because it might have dangling tokens.
-        // The easiest way is to replicate the internal logic of DssVest to get the exact amount.
-        return _min(unpaid, maxAmount);
     }
 
     /**

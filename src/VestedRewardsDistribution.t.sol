@@ -22,7 +22,6 @@ import {IStakingRewards} from "./synthetix/interfaces/IStakingRewards.sol";
 import {StakingRewards} from "./synthetix/StakingRewards.sol";
 import {SDAO} from "./SDAO.sol";
 import {VestedRewardsDistribution} from "./VestedRewardsDistribution.sol";
-import {DistributionCalc, LinearRampUp} from "./DistributionCalc.sol";
 
 contract VestedRewardsDistributionTest is DssTest {
     using stdStorage for StdStorage;
@@ -37,7 +36,6 @@ contract VestedRewardsDistributionTest is DssTest {
 
     struct DistributionParams {
         VestedRewardsDistribution dist;
-        address calc;
         DssVestWithGemLike vest;
         IStakingRewards farm;
         IERC20Mintable rewardsToken;
@@ -46,7 +44,6 @@ contract VestedRewardsDistributionTest is DssTest {
     }
 
     DistributionParams k;
-    DistributionParams l;
 
     uint256 constant DEFAULT_DURATION = 365 days;
     uint256 constant DEFAULT_CLIFF = 0;
@@ -63,22 +60,9 @@ contract VestedRewardsDistributionTest is DssTest {
         k = _setUpDistributionParams(
             DistributionParams({
                 dist: VestedRewardsDistribution(address(0)),
-                calc: address(0),
                 vest: DssVestWithGemLike(address(0)),
                 farm: IStakingRewards(address(0)),
                 rewardsToken: IERC20Mintable(address(new SDAO("K Token", "K"))),
-                vestId: 0,
-                vestParams: _makeVestParams()
-            })
-        );
-
-        l = _setUpDistributionParams(
-            DistributionParams({
-                dist: VestedRewardsDistribution(address(0)),
-                calc: address(new LinearRampUp(DEFAULT_STARTING_RATE)),
-                vest: DssVestWithGemLike(address(0)),
-                farm: IStakingRewards(address(0)),
-                rewardsToken: IERC20Mintable(address(new SDAO("L Token", "L"))),
                 vestId: 0,
                 vestParams: _makeVestParams()
             })
@@ -165,75 +149,7 @@ contract VestedRewardsDistributionTest is DssTest {
 
         skip(365 days);
         // Check if the amount undistributed is less than 0.001% of the total
-        assertLe(k.vest.unpaid(l.vestId), k.vestParams.tot / 10000);
-    }
-
-    function testDistributeLinearRampUp() public {
-        skip(l.vestParams.tau);
-
-        assertEq(l.rewardsToken.balanceOf(address(l.farm)), 0);
-
-        vm.expectEmit(false, false, false, true, address(l.dist));
-        emit Distribute(l.vestParams.tot);
-        l.dist.distribute();
-
-        // Allow for 0,01% error tolerance due to rounding errors.
-        uint256 tolerance = 0.0001e18;
-        assertApproxEqRel(l.rewardsToken.balanceOf(address(l.farm)), l.vestParams.tot, tolerance);
-    }
-
-    function testRevertDistributeLinearRampUpStartingRateTooHigh() public {
-        l.dist.file("calc", address(new LinearRampUp(DEFAULT_STARTING_RATE * 100_000_000)));
-
-        skip(l.vestParams.tau);
-
-        vm.expectRevert("LinearRampUp/total-vesting-too-low");
-        l.dist.distribute();
-    }
-
-    function testDistributeLinearRampUpLinearityFuzz(uint256 totalDistributions) public {
-        // Anything between 1 per week and 1 per month.
-        totalDistributions = (bound(totalDistributions, 12, 52) * l.vestParams.tau) / 365 days;
-        // Make distributions uniformly spread across time
-        uint256 timeSkip = l.vestParams.tau / totalDistributions;
-
-        uint256[] memory balances = new uint256[](totalDistributions);
-        vm.warp(l.vestParams.bgn);
-        for (uint256 i = 0; i < totalDistributions; i++) {
-            skip(timeSkip);
-            l.dist.distribute();
-            balances[i] = l.rewardsToken.balanceOf(address(l.farm));
-        }
-
-        uint256[] memory deltas = new uint256[](totalDistributions - 1);
-        for (uint256 i = 1; i < totalDistributions; i++) {
-            deltas[i - 1] = balances[i] - balances[i - 1];
-        }
-
-        uint256[] memory deltaChanges = new uint256[](deltas.length - 1);
-        for (uint256 i = 1; i < deltas.length; i++) {
-            deltaChanges[i - 1] = deltas[i] - deltas[i - 1];
-        }
-
-        // Allow for 0,01% error tolerance due to rounding errors.
-        uint256 tolerance = 0.0001e18;
-
-        for (uint256 i = 1; i < deltaChanges.length; i++) {
-            // Check if balance of the farm contract grew linearly every time.
-            assertApproxEqRel(
-                deltaChanges[i],
-                deltaChanges[i - 1],
-                tolerance,
-                string.concat("Bad balance change between #", toString(i - 1), " and #", toString(i))
-            );
-        }
-
-        // Check the final balance.
-        assertApproxEqRel(l.rewardsToken.balanceOf(address(l.farm)), l.vestParams.tot, tolerance);
-
-        skip(365 days);
-        // Check if the amount undistributed is less than 0.001% of the total
-        assertLe(l.vest.unpaid(l.vestId), l.vestParams.tot / 10000);
+        assertLe(k.vest.unpaid(k.vestId), k.vestParams.tot / 10000);
     }
 
     function testRevertDistributeInvalidVestId() public {
@@ -247,23 +163,6 @@ contract VestedRewardsDistributionTest is DssTest {
     function testRevertDistributeNoVestedAmount() public {
         vm.expectRevert("VestedRewardsDistribution/no-pending-amount");
         k.dist.distribute();
-    }
-
-    function testRevertDistributeNoPendingDistributionAmount() public {
-        k.dist.file("calc", address(new MockZeroDistribution()));
-
-        skip(k.vestParams.tau / 3);
-
-        vm.expectRevert("VestedRewardsDistribution/no-pending-amount");
-        k.dist.distribute();
-    }
-
-    function testRevertDistributeMoreThanOnceSameBlock() public {
-        skip(l.vestParams.tau / 100);
-        l.dist.distribute();
-
-        vm.expectRevert("VestedRewardsDistribution/no-pending-amount");
-        l.dist.distribute();
     }
 
     function testRevertFileInvalidVestId() public {
@@ -307,8 +206,6 @@ contract VestedRewardsDistributionTest is DssTest {
         _setUpVest(k.vest, k.vestParams);
         checkFileUint(address(k.dist), "VestedRewardsDistribution", ["vestId"]);
         assertEq(k.dist.lastDistributedAt(), 0, "`lastDistributedAt` not reset");
-
-        checkFileAddress(address(k.dist), "VestedRewardsDistribution", ["calc"]);
     }
 
     function testDistributeFromMultipleVestsRegression() public {
@@ -387,37 +284,35 @@ contract VestedRewardsDistributionTest is DssTest {
 
     function testUnexpectedTokenBalanceOnDistDoesNotMessWithDistributionRegression() public {
         // These tokens on the distribution contract should not be distributed.
-        l.rewardsToken.mint(address(l.dist), 1_000_000_000 * WAD);
+        k.rewardsToken.mint(address(k.dist), 1_000_000_000 * WAD);
 
-        skip(l.vestParams.tau / 3);
+        skip(k.vestParams.tau / 3);
 
-        assertEq(l.rewardsToken.balanceOf(address(l.farm)), 0, "Bad initial balance");
+        assertEq(k.rewardsToken.balanceOf(address(k.farm)), 0, "Bad initial balance");
 
-        uint256 amount = l.dist.distribute();
+        uint256 amount = k.dist.distribute();
 
         assertLt(amount, 1_000_000_000 * WAD, "Dangling tokens distributed");
-        assertEq(l.rewardsToken.balanceOf(address(l.farm)), amount, "Bad final balance");
+        assertEq(k.rewardsToken.balanceOf(address(k.farm)), amount, "Bad final balance");
     }
 
     function testRevertWithReasonWhenDistributeBeforeCliffRegression() public {
         (uint256 vestId2, ) = _setUpVest(
-            l.vest,
+            k.vest,
             VestParams({
-                usr: address(l.dist),
-                tot: l.vestParams.tot / 2,
+                usr: address(k.dist),
+                tot: k.vestParams.tot / 2,
                 bgn: block.timestamp + 1 days, // start in the future
-                tau: l.vestParams.tau, // 1 year duration
+                tau: k.vestParams.tau, // 1 year duration
                 eta: 0 // No cliff; start at bgn
             })
         );
-        l.dist.file("vestId", vestId2);
+        k.dist.file("vestId", vestId2);
 
         // Exactly at the cliff timestamp there should be no tokens to distribute
         skip(1 days);
         vm.expectRevert("VestedRewardsDistribution/no-pending-amount");
-        l.dist.distribute();
-
-        // ---------
+        k.dist.distribute();
 
         (uint256 vestId3, ) = _setUpVest(
             k.vest,
@@ -458,7 +353,7 @@ contract VestedRewardsDistributionTest is DssTest {
         }
 
         if (address(result.dist) == address(0)) {
-            result.dist = new VestedRewardsDistribution(address(result.vest), address(result.farm), result.calc);
+            result.dist = new VestedRewardsDistribution(address(result.vest), address(result.farm));
         }
 
         result.farm.setRewardsDistribution(address(result.dist));
@@ -600,10 +495,4 @@ interface IERC20Mintable is IERC20 {
 
 interface WardsLike {
     function rely(address) external;
-}
-
-contract MockZeroDistribution is DistributionCalc {
-    function getMaxAmount(uint256, uint256, uint256, uint256, uint256) external pure returns (uint256) {
-        return 0;
-    }
 }

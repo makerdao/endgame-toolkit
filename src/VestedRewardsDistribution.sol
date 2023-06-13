@@ -161,11 +161,4 @@ contract VestedRewardsDistribution {
 
         emit Distribute(amount);
     }
-
-    /**
-     * @notice Returns the minimum between two values.
-     */
-    function _min(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a > b ? b : a;
-    }
 }

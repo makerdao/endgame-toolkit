@@ -145,6 +145,8 @@ contract VestedRewardsDistribution {
 
     /**
      * @notice Distributes the amount of rewards due since the last distribution.
+     * @dev Notice we don't need to wait for the current distribution `periodFinish` to be over in the
+     * `RewardsDistribution` contract because it can handle new rewards being sent at any given time.
      * @return amount The amount being distributed.
      */
     function distribute() external returns (uint256 amount) {

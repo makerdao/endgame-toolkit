@@ -8,10 +8,9 @@ A set of components for the [SubDAO](https://endgame.makerdao.com/subdaos/overvi
 - [Components](#components)
   - [`SubProxy`](#subproxy)
   - [`SDAO`](#sdao)
-  - [`VestedRewardsDistribution`](#vestedrewardsdistribution)
-  - [`DistributionCalc` (interface)](#distributioncalc-interface)
-    - [`LinearRampUp`](#linearrampup)
-  - [`StakingRewards`](#stakingrewards)
+  - [Farms](#farms)
+    - [`VestedRewardsDistribution`](#vestedrewardsdistribution)
+    - [`StakingRewards`](#stakingrewards)
 - [Contributing](#contributing)
   - [Requirements](#requirements)
   - [Install dependencies](#install-dependencies)
@@ -43,53 +42,19 @@ There is an uncommon feature that allow the owner of the contract to change both
 by SubDAOs in the future to rebrand their tokens. For simplicity, there is no limitation on the amount of times this can
 be done at code level. Future immutability will be enforced off-chain by governance artifacts.
 
-### `VestedRewardsDistribution`
+### Farms
+
+For more details about the farming solution in the scope of the Endgame, please refer to the [technical document](https://hackmd.io/@amusingaxl/endgame-token-farming).
+
+#### `VestedRewardsDistribution`
 
 Rewards are going to be generated through a [`DssVestMintable`][dss-vest] contract and distributed to final users
 through a [`StakingRewards`](#stakingrewards) contract.
 
 `VestedRewardsDistribution` is the "glue" between these two very distinct contracts. It controls the vesting stream from
-`DssVest` and permissionlessly allows for distributing rewards on a predefined schedule. By default, the distribution
-schedule is the same as the vesting schedule, however it could be controlled by a `DistributionCalc` contract.
+`DssVest` and permissionlessly allows for distributing rewards on a predefined schedule.
 
-### `DistributionCalc` (interface)
-
-`DssVest` streams can only have a constant distribution rate. The reason `DistributionCalc` exists is that the reward
-distribution schedule will not always match the vesting schedule.
-
-#### `LinearRampUp`
-
-`LinearRampUp` is a `DistributionCalc` implementation that allows ramp up the reward distribution linearly, so early
-adopters do not have an unfair advantage.
-
-It accepts a `startingRate` parameter for the initial distribution rate it should target and grows linearly until the
-entire vesting stream is distributed.
-
-To obtain the total amount to be distributed and set it as `tot` for the vesting stream, the following formula can be
-used:
-
-```
-tot = ((s + f) * (fin - clf)) / 2
-```
-
-Where:
-
-- `s`: the starting distribution rate.
-- `f`: the final distribution rate.
-- `fin`: the timestamp when the vesting stream ends.
-- `clf`: the timestamp when the vesting stream is available (cliff).
-
-**NOTICE:** `s` and `f` must be expressed in terms of the stream duration `fin - bgn` and with the right precision.
-
-For instance, if the rewards token has `18` decimals and the distribution should start at `100k` per year and end at
-`200k` per year, but will only last 6 months, the values for `s` and `f` are:
-
-```
-s = (100_000 * 10**18) / year * (1/2 year) = 50_000 * 10**18
-f = (200_000 * 10**18) / year * (1/2 year) = 100_000 * 10**18
-```
-
-### `StakingRewards`
+#### `StakingRewards`
 
 `StakingRewards` is a port of [Synthetix `StakingRewards`][staking-rewards]. The changes made include:
 

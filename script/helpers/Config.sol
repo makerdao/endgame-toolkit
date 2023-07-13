@@ -46,16 +46,3 @@ contract OptionalReader {
         return stdJson.readAddress(data, key);
     }
 }
-
-struct Exports {
-    address gov;
-    address subProxy;
-}
-
-struct Imports {
-    address dist;
-    address farm;
-    address gov;
-    address subProxy;
-    address vest;
-}

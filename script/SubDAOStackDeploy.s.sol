@@ -20,9 +20,21 @@ import {stdJson} from "forge-std/StdJson.sol";
 import {MCD, DssInstance} from "dss-test/MCD.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 
-import {ConfigReader, Exports, Imports} from "./helpers/Config.sol";
+import {ConfigReader} from "./helpers/Config.sol";
 import {SubProxyDeploy} from "../src/deploy/SubProxyDeploy.sol";
 import {SDAODeploy} from "../src/deploy/SDAODeploy.sol";
+
+struct Exports {
+    address gov;
+    address subProxy;
+}
+
+struct Imports {
+    address dist;
+    address gov;
+    address subProxy;
+    address vest;
+}
 
 contract SubDAOStackDeployScript is Script {
     string internal constant NAME_PREFIX = "SubDAO-";
@@ -50,7 +62,6 @@ contract SubDAOStackDeployScript is Script {
         for (uint256 i = 0; i < names.length; i++) {
             imports = Imports({
                 dist: reader.readAddressOptional(string.concat(".imports.", names[i], ".dist")),
-                farm: reader.readAddressOptional(string.concat(".imports.", names[i], ".farm")),
                 gov: reader.readAddressOptional(string.concat(".imports.", names[i], ".gov")),
                 subProxy: reader.readAddressOptional(string.concat(".imports.", names[i], ".subProxy")),
                 vest: reader.readAddressOptional(string.concat(".imports.", names[i], ".vest"))

@@ -4,7 +4,7 @@ out = 'out'
 script = 'script'
 libs = ['lib']
 solc_version = '0.8.19'
-optimizer = false
+optimizer = true
 fs_permissions = [
     { access = "read", path = "./out/" },
     { access = "read", path = "./script/input/" },

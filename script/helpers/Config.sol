@@ -32,8 +32,20 @@ contract ConfigReader {
         return this.readOr(key, address(0));
     }
 
+    function readUintOptional(string memory key) external returns (uint256) {
+        return this.readOr(key, 0);
+    }
+
     function readOr(string memory key, address def) external returns (address) {
         try opReader.readAddress(config, key) returns (address result) {
+            return result;
+        } catch {
+            return def;
+        }
+    }
+
+    function readOr(string memory key, uint256 def) external returns (uint256) {
+        try opReader.readUint(config, key) returns (uint256 result) {
             return result;
         } catch {
             return def;
@@ -44,5 +56,9 @@ contract ConfigReader {
 contract OptionalReader {
     function readAddress(string memory data, string memory key) external returns (address) {
         return stdJson.readAddress(data, key);
+    }
+
+    function readUint(string memory data, string memory key) external returns (uint) {
+        return stdJson.readUint(data, key);
     }
 }

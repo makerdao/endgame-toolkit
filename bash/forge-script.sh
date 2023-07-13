@@ -21,7 +21,7 @@ run_script() {
 	# This makes it hard to compose its output with other commands, so here we are:
 	# 1. Duplicating stdout to stderr through `tee`
 	# 2. Extracting only the address of the deployed contract to stdout
-	RESPONSE=$(forge script --json --sender "$FOUNDRY_ETH_FROM" --keystores "$FOUNDRY_ETH_KEYSTORE_FILE" "${PASSWORD_OPT[@]}" "$@" | tee >(cat 1>&2))
+	RESPONSE=$(forge script --json --sender "$FOUNDRY_ETH_FROM" --keystore "$FOUNDRY_ETH_KEYSTORE_FILE" "${PASSWORD_OPT[@]}" "$@" | tee >(cat 1>&2))
 
 	jq -Rr 'fromjson?' <<<"$RESPONSE"
 }

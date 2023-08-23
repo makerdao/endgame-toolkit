@@ -15,16 +15,18 @@
 
 pragma solidity ^0.8.0;
 
-import {StakingRewards} from "../synthetix/StakingRewards.sol";
+import {ScriptTools} from "dss-test/ScriptTools.sol";
+import {SDAO} from "../../src/SDAO.sol";
 
-struct StakingRewardsDeployParams {
-    address owner;
-    address stakingToken;
-    address rewardsToken;
-}
+library SDAODeploy {
+    function deploy(
+        address deployer,
+        address owner,
+        string memory name,
+        string memory symbol
+    ) internal returns (address token) {
+        token = address(new SDAO(name, symbol));
 
-library StakingRewardsDeploy {
-    function deploy(StakingRewardsDeployParams memory p) internal returns (address stakingRewards) {
-        stakingRewards = address(new StakingRewards(p.owner, address(0), p.rewardsToken, p.stakingToken));
+        ScriptTools.switchOwner(token, deployer, owner);
     }
 }

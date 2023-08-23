@@ -20,12 +20,11 @@ import {stdJson} from "forge-std/StdJson.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 
 import {ConfigReader} from "./helpers/Config.sol";
-import {DssVestWithGemLike} from "../src/interfaces/DssVestWithGemLike.sol";
-import {StakingRewardsDeploy, StakingRewardsDeployParams} from "../src/deploy/StakingRewardsDeploy.sol";
-import {VestedRewardsDistributionDeploy, VestedRewardsDistributionDeployParams} from "../src/deploy/VestedRewardsDistributionDeploy.sol";
-import {StakingRewardsInit, StakingRewardsInitParams} from "../src/deploy/StakingRewardsInit.sol";
-import {VestedRewardsDistributionInit, VestedRewardsDistributionInitParams} from "../src/deploy/VestedRewardsDistributionInit.sol";
-import {VestInit, VestInitParams} from "../src/deploy/VestInit.sol";
+import {StakingRewardsDeploy, StakingRewardsDeployParams} from "./dependencies/StakingRewardsDeploy.sol";
+import {VestedRewardsDistributionDeploy, VestedRewardsDistributionDeployParams} from "./dependencies/VestedRewardsDistributionDeploy.sol";
+import {StakingRewardsInit, StakingRewardsInitParams} from "./dependencies/StakingRewardsInit.sol";
+import {VestedRewardsDistributionInit, VestedRewardsDistributionInitParams} from "./dependencies/VestedRewardsDistributionInit.sol";
+import {VestInit, VestInitParams, VestCreateParams} from "./dependencies/VestInit.sol";
 
 struct Exports {
     address dist;
@@ -90,7 +89,7 @@ contract FarmDeployScript is Script {
 
         if (imports.vest == address(0)) {
             exports.vest = deployCode("DssVest.sol:DssVestMintable", abi.encode(exports.ngt));
-            DssVestWithGemLike(exports.vest).file("cap", type(uint256).max);
+            VestInit.init(VestInitParams({vest: exports.vest, cap: type(uint256).max}));
         }
 
         if (imports.farm == address(0)) {
@@ -113,8 +112,8 @@ contract FarmDeployScript is Script {
         StakingRewardsInit.init(StakingRewardsInitParams({farm: exports.farm, dist: exports.dist}));
 
         exports.vestId = VestInit
-            .init(
-                VestInitParams({
+            .create(
+                VestCreateParams({
                     vest: exports.vest,
                     usr: exports.dist,
                     tot: imports.vestTot,

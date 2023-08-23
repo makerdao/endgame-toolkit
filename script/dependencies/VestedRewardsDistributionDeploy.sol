@@ -15,17 +15,20 @@
 
 pragma solidity ^0.8.0;
 
-struct VestedRewardsDistributionInitParams {
-    address dist;
-    uint256 vestId;
+import {ScriptTools} from "dss-test/ScriptTools.sol";
+import {VestedRewardsDistribution} from "../../src/VestedRewardsDistribution.sol";
+
+struct VestedRewardsDistributionDeployParams {
+    address deployer;
+    address owner;
+    address vest;
+    address farm;
 }
 
-interface VestedRewardsDistributionLike {
-    function file(bytes32 what, uint256 data) external;
-}
+library VestedRewardsDistributionDeploy {
+    function deploy(VestedRewardsDistributionDeployParams memory p) internal returns (address dist) {
+        dist = address(new VestedRewardsDistribution(p.vest, p.farm));
 
-library VestedRewardsDistributionInit {
-    function init(VestedRewardsDistributionInitParams memory p) internal {
-        VestedRewardsDistributionLike(p.dist).file("vestId", p.vestId);
+        ScriptTools.switchOwner(dist, p.deployer, p.owner);
     }
 }

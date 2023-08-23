@@ -15,35 +15,17 @@
 
 pragma solidity ^0.8.0;
 
-import {ScriptTools} from "dss-test/ScriptTools.sol";
-import {DssVestWithGemLike} from "../interfaces/DssVestWithGemLike.sol";
-
-struct VestInitParams {
-    address vest;
-    address usr;
-    uint256 tot;
-    uint256 bgn;
-    uint256 tau;
-    uint256 eta;
+interface StakingRewardsLike {
+    function setRewardsDistribution(address _rewardsDistribution) external;
 }
 
-struct VestInitResult {
-    uint256 vestId;
+struct StakingRewardsInitParams {
+    address farm;
+    address dist;
 }
 
-library VestInit {
-    using ScriptTools for string;
-
-    function init(VestInitParams memory p) internal returns (VestInitResult memory res) {
-        res.vestId = DssVestWithGemLike(p.vest).create(
-            p.usr,
-            p.tot,
-            p.bgn,
-            p.tau,
-            p.eta,
-            address(0) // mgr
-        );
-
-        DssVestWithGemLike(p.vest).restrict(res.vestId);
+library StakingRewardsInit {
+    function init(StakingRewardsInitParams memory p) internal {
+        StakingRewardsLike(p.farm).setRewardsDistribution(p.dist);
     }
 }

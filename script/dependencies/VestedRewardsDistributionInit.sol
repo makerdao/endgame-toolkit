@@ -15,13 +15,17 @@
 
 pragma solidity ^0.8.0;
 
-import {ScriptTools} from "dss-test/ScriptTools.sol";
-import {SubProxy} from "../SubProxy.sol";
+interface VestedRewardsDistributionLike {
+    function file(bytes32 what, uint256 data) external;
+}
 
-library SubProxyDeploy {
-    function deploy(address deployer, address owner) internal returns (address subProxy) {
-        subProxy = address(new SubProxy());
+struct VestedRewardsDistributionInitParams {
+    address dist;
+    uint256 vestId;
+}
 
-        ScriptTools.switchOwner(subProxy, deployer, owner);
+library VestedRewardsDistributionInit {
+    function init(VestedRewardsDistributionInitParams memory p) internal {
+        VestedRewardsDistributionLike(p.dist).file("vestId", p.vestId);
     }
 }

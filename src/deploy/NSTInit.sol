@@ -25,6 +25,8 @@ struct NSTInitParams {
 
 library NSTInit {
     function init(NSTInitParams memory p) internal {
-        Nst(p.token).mint(p.receiver, p.amount);
+        if (Nst(p.token).wards(msg.sender) == 1) {
+            Nst(p.token).mint(p.receiver, p.amount);
+        }
     }
 }

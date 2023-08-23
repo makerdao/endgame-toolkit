@@ -24,6 +24,8 @@ struct NGTInitParams {
 
 library NGTInit {
     function init(NGTInitParams memory p) internal {
-        Ngt(p.token).rely(p.minter);
+        if (Ngt(p.token).wards(msg.sender) == 1) {
+            Ngt(p.token).rely(p.minter);
+        }
     }
 }

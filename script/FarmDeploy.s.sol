@@ -105,7 +105,6 @@ contract FarmDeployScript is Script {
         if (imports.nst == address(0)) {
             exports.nst = NSTDeploy.deploy(NSTDeployParams({deployer: msg.sender, owner: msg.sender}));
         }
-        NSTInit.init(NSTInitParams({token: exports.nst, receiver: imports.nstMintRec, amount: imports.nstMintAmt}));
 
         if (imports.farm == address(0)) {
             exports.farm = StakingRewardsDeploy.deploy(
@@ -123,6 +122,8 @@ contract FarmDeployScript is Script {
                 })
             );
         }
+
+        NSTInit.init(NSTInitParams({token: exports.nst, receiver: imports.nstMintRec, amount: imports.nstMintAmt}));
 
         NGTInit.init(NGTInitParams({token: exports.ngt, minter: exports.dist}));
 

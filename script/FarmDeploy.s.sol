@@ -21,10 +21,6 @@ import {ScriptTools} from "dss-test/ScriptTools.sol";
 
 import {ConfigReader} from "./helpers/Config.sol";
 import {DssVestWithGemLike} from "../src/interfaces/DssVestWithGemLike.sol";
-import {NGTDeploy, NGTDeployParams} from "../src/deploy/NGTDeploy.sol";
-import {NGTInit, NGTInitParams} from "../src/deploy/NGTInit.sol";
-import {NSTDeploy, NSTDeployParams} from "../src/deploy/NSTDeploy.sol";
-import {NSTInit, NSTInitParams} from "../src/deploy/NSTInit.sol";
 import {StakingRewardsDeploy, StakingRewardsDeployParams} from "../src/deploy/StakingRewardsDeploy.sol";
 import {VestedRewardsDistributionDeploy, VestedRewardsDistributionDeployParams} from "../src/deploy/VestedRewardsDistributionDeploy.sol";
 import {StakingRewardsInit, StakingRewardsInitParams} from "../src/deploy/StakingRewardsInit.sol";
@@ -93,17 +89,12 @@ contract FarmDeployScript is Script {
 
         vm.startBroadcast();
 
-        if (imports.ngt == address(0)) {
-            exports.ngt = NGTDeploy.deploy(NGTDeployParams({deployer: msg.sender, owner: msg.sender}));
-        }
+        require(imports.ngt != address(0), "imports.ngt is mandatory");
+        require(imports.nst != address(0), "imports.nst is mandatory");
 
         if (imports.vest == address(0)) {
             exports.vest = deployCode("DssVest.sol:DssVestMintable", abi.encode(exports.ngt));
             DssVestWithGemLike(exports.vest).file("cap", type(uint256).max);
-        }
-
-        if (imports.nst == address(0)) {
-            exports.nst = NSTDeploy.deploy(NSTDeployParams({deployer: msg.sender, owner: msg.sender}));
         }
 
         if (imports.farm == address(0)) {
@@ -122,10 +113,6 @@ contract FarmDeployScript is Script {
                 })
             );
         }
-
-        NSTInit.init(NSTInitParams({token: exports.nst, receiver: imports.nstMintRec, amount: imports.nstMintAmt}));
-
-        NGTInit.init(NGTInitParams({token: exports.ngt, minter: exports.dist}));
 
         StakingRewardsInit.init(StakingRewardsInitParams({farm: exports.farm, dist: exports.dist}));
 

@@ -16,8 +16,11 @@
 pragma solidity ^0.8.0;
 
 import {ScriptTools} from "dss-test/ScriptTools.sol";
-import {SubProxy} from "../SubProxy.sol";
 import {DssInstance, MCD} from "dss-test/MCD.sol";
+
+interface SubProxyLike {
+    function rely(address who) external;
+}
 
 library SubProxyInit {
     using ScriptTools for string;
@@ -29,7 +32,7 @@ library SubProxyInit {
 
     function init(DssInstance memory mcd, address subProxy, string memory name) internal {
         // Rely on `MCD_END` to allow `deny`ing `MCD_PAUSE_PROXY` after Emergency Shutdown.
-        SubProxy(subProxy).rely(address(mcd.end));
+        SubProxyLike(subProxy).rely(address(mcd.end));
         // Add `SUBPROXY_{NAME}` to the chainlog.
         mcd.chainlog.setAddress(string.concat("SUBPROXY_", name).stringToBytes32(), subProxy);
     }

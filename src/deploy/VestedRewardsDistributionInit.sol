@@ -15,15 +15,17 @@
 
 pragma solidity ^0.8.0;
 
-import {VestedRewardsDistribution} from "../VestedRewardsDistribution.sol";
-
 struct VestedRewardsDistributionInitParams {
     address dist;
     uint256 vestId;
 }
 
+interface VestedRewardsDistributionLike {
+    function file(bytes32 what, uint256 data) external;
+}
+
 library VestedRewardsDistributionInit {
     function init(VestedRewardsDistributionInitParams memory p) internal {
-        VestedRewardsDistribution(p.dist).file("vestId", p.vestId);
+        VestedRewardsDistributionLike(p.dist).file("vestId", p.vestId);
     }
 }

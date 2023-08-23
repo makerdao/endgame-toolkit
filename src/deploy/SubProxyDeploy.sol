@@ -15,8 +15,8 @@
 
 pragma solidity ^0.8.0;
 
-import {SubProxy} from "../SubProxy.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
+import {SubProxy} from "../SubProxy.sol";
 
 library SubProxyDeploy {
     function deploy(address deployer, address owner) internal returns (address subProxy) {

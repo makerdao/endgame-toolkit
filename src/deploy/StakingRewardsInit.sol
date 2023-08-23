@@ -15,15 +15,17 @@
 
 pragma solidity ^0.8.0;
 
-import {IStakingRewards} from "../synthetix/interfaces/IStakingRewards.sol";
-
 struct StakingRewardsInitParams {
     address farm;
     address dist;
 }
 
+interface StakingRewardsLike {
+    function setRewardsDistribution(address _rewardsDistribution) external;
+}
+
 library StakingRewardsInit {
     function init(StakingRewardsInitParams memory p) internal {
-        IStakingRewards(p.farm).setRewardsDistribution(p.dist);
+        StakingRewardsLike(p.farm).setRewardsDistribution(p.dist);
     }
 }

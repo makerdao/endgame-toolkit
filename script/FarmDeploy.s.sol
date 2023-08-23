@@ -25,7 +25,7 @@ import {StakingRewardsDeploy, StakingRewardsDeployParams} from "../src/deploy/St
 import {VestedRewardsDistributionDeploy, VestedRewardsDistributionDeployParams} from "../src/deploy/VestedRewardsDistributionDeploy.sol";
 import {StakingRewardsInit, StakingRewardsInitParams} from "../src/deploy/StakingRewardsInit.sol";
 import {VestedRewardsDistributionInit, VestedRewardsDistributionInitParams} from "../src/deploy/VestedRewardsDistributionInit.sol";
-import {VestInit, VestInitParams, VestInitResult} from "../src/deploy/VestInit.sol";
+import {VestInit, VestInitParams} from "../src/deploy/VestInit.sol";
 
 struct Exports {
     address dist;
@@ -41,8 +41,6 @@ struct Imports {
     address farm;
     address ngt;
     address nst;
-    address nstMintRec;
-    uint256 nstMintAmt;
     address vest;
     uint256 vestTot;
     uint256 vestBgn;
@@ -73,8 +71,6 @@ contract FarmDeployScript is Script {
             farm: reader.readAddressOptional(string.concat(".imports.farm")),
             ngt: reader.readAddressOptional(string.concat(".imports.ngt")),
             nst: reader.readAddressOptional(string.concat(".imports.nst")),
-            nstMintRec: reader.readAddressOptional(string.concat(".imports.nstMintRec")),
-            nstMintAmt: reader.readUintOptional(string.concat(".imports.nstMintAmt")),
             vest: reader.readAddressOptional(string.concat(".imports.vest")),
             vestTot: reader.readUintOptional(string.concat(".imports.vestTot")),
             vestBgn: reader.readUintOptional(string.concat(".imports.vestBgn")),

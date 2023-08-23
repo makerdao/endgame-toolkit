@@ -17,7 +17,6 @@ pragma solidity ^0.8.0;
 
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 import {DssVestWithGemLike} from "../interfaces/DssVestWithGemLike.sol";
-import {IStakingRewards} from "../synthetix/interfaces/IStakingRewards.sol";
 
 struct VestInitParams {
     address vest;
@@ -37,11 +36,11 @@ library VestInit {
 
     function init(VestInitParams memory p) internal returns (VestInitResult memory res) {
         res.vestId = DssVestWithGemLike(p.vest).create(
-            p.usr, // usr
-            p.tot, // tot
-            p.bgn, // bgn
-            p.tau, // tau
-            p.eta, // eta
+            p.usr,
+            p.tot,
+            p.bgn,
+            p.tau,
+            p.eta,
             address(0) // mgr
         );
 

@@ -27,6 +27,7 @@ import {VestedRewardsDistributionInit, VestedRewardsDistributionInitParams} from
 import {VestInit, VestInitParams, VestCreateParams} from "./dependencies/VestInit.sol";
 
 struct Exports {
+    address admin;
     address dist;
     address farm;
     address ngt;
@@ -38,8 +39,6 @@ struct Exports {
 struct Imports {
     address dist;
     address farm;
-    address ngt;
-    address nst;
     address vest;
     uint256 vestTot;
     uint256 vestBgn;
@@ -47,12 +46,11 @@ struct Imports {
     uint256 vestEta;
 }
 
-contract FarmDeployScript is Script {
-    string internal constant NAME = "Farm";
-
+contract StakingRewardsDeployScript is Script {
     using stdJson for string;
     using ScriptTools for string;
 
+    string internal constant NAME = "StakingRewards";
     string internal config;
 
     Imports internal imports;
@@ -62,30 +60,28 @@ contract FarmDeployScript is Script {
         config = ScriptTools.loadConfig();
 
         address admin = config.readAddress(".admin");
+        address ngt = config.readAddress(".ngt");
+        address nst = config.readAddress(".nst");
 
         ConfigReader reader = new ConfigReader(config);
 
         imports = Imports({
-            dist: reader.readAddressOptional(string.concat(".imports.dist")),
-            farm: reader.readAddressOptional(string.concat(".imports.farm")),
-            ngt: reader.readAddressOptional(string.concat(".imports.ngt")),
-            nst: reader.readAddressOptional(string.concat(".imports.nst")),
-            vest: reader.readAddressOptional(string.concat(".imports.vest")),
-            vestTot: reader.readUintOptional(string.concat(".imports.vestTot")),
-            vestBgn: reader.readUintOptional(string.concat(".imports.vestBgn")),
-            vestTau: reader.readUintOptional(string.concat(".imports.vestTau")),
-            vestEta: reader.readUintOptional(string.concat(".imports.vestEta"))
+            dist: reader.readAddressOptional(".imports.dist"),
+            farm: reader.readAddressOptional(".imports.farm"),
+            vest: reader.readAddressOptional(".imports.vest"),
+            vestTot: reader.readUintOptional(".imports.vestTot"),
+            vestBgn: reader.readUintOptional(".imports.vestBgn"),
+            vestTau: reader.readUintOptional(".imports.vestTau"),
+            vestEta: reader.readUintOptional(".imports.vestEta")
         });
 
+        exports.admin = admin;
+        exports.ngt = ngt;
+        exports.nst = nst;
         exports.dist = imports.dist;
-        exports.ngt = imports.ngt;
-        exports.nst = imports.nst;
         exports.vest = imports.vest;
 
         vm.startBroadcast();
-
-        require(imports.ngt != address(0), "imports.ngt is mandatory");
-        require(imports.nst != address(0), "imports.nst is mandatory");
 
         if (imports.vest == address(0)) {
             exports.vest = deployCode("DssVest.sol:DssVestMintable", abi.encode(exports.ngt));
@@ -130,6 +126,7 @@ contract FarmDeployScript is Script {
 
         vm.stopBroadcast();
 
+        ScriptTools.exportContract(NAME, "admin", exports.admin);
         ScriptTools.exportContract(NAME, "dist", exports.dist);
         ScriptTools.exportContract(NAME, "farm", exports.farm);
         ScriptTools.exportContract(NAME, "ngt", exports.ngt);

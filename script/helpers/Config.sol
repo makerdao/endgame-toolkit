@@ -28,6 +28,14 @@ contract ConfigReader {
         opReader = new OptionalReader();
     }
 
+    function readAddress(string memory key) external returns (address) {
+        return stdJson.readAddress(config, key);
+    }
+
+    function readUint(string memory key) external returns (uint) {
+        return stdJson.readUint(config, key);
+    }
+
     function readAddressOptional(string memory key) external returns (address) {
         return this.readOr(key, address(0));
     }

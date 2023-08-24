@@ -26,26 +26,6 @@ import {StakingRewardsInit, StakingRewardsInitParams} from "./dependencies/Staki
 import {VestedRewardsDistributionInit, VestedRewardsDistributionInitParams} from "./dependencies/VestedRewardsDistributionInit.sol";
 import {VestInit, VestInitParams, VestCreateParams} from "./dependencies/VestInit.sol";
 
-struct Exports {
-    address admin;
-    address dist;
-    address farm;
-    address ngt;
-    address nst;
-    address vest;
-    uint256 vestId;
-}
-
-struct Imports {
-    address dist;
-    address farm;
-    address vest;
-    uint256 vestTot;
-    uint256 vestBgn;
-    uint256 vestTau;
-    uint256 vestEta;
-}
-
 contract StakingRewardsDeployScript is Script {
     using stdJson for string;
     using ScriptTools for string;
@@ -53,84 +33,62 @@ contract StakingRewardsDeployScript is Script {
     string internal constant NAME = "StakingRewards";
     string internal config;
 
-    Imports internal imports;
-    Exports internal exports;
-
     function run() external {
         config = ScriptTools.loadConfig();
+        ConfigReader reader = new ConfigReader(config);
 
         address admin = config.readAddress(".admin");
         address ngt = config.readAddress(".ngt");
         address nst = config.readAddress(".nst");
-
-        ConfigReader reader = new ConfigReader(config);
-
-        imports = Imports({
-            dist: reader.readAddressOptional(".imports.dist"),
-            farm: reader.readAddressOptional(".imports.farm"),
-            vest: reader.readAddressOptional(".imports.vest"),
-            vestTot: reader.readUintOptional(".imports.vestTot"),
-            vestBgn: reader.readUintOptional(".imports.vestBgn"),
-            vestTau: reader.readUintOptional(".imports.vestTau"),
-            vestEta: reader.readUintOptional(".imports.vestEta")
-        });
-
-        exports.admin = admin;
-        exports.ngt = ngt;
-        exports.nst = nst;
-        exports.dist = imports.dist;
-        exports.vest = imports.vest;
+        address dist = reader.readAddressOptional(".dist");
+        address farm = reader.readAddressOptional(".farm");
+        address vest = reader.readAddressOptional(".vest");
+        uint256 vestTot = reader.readUintOptional(".vestTot");
+        uint256 vestBgn = reader.readUintOptional(".vestBgn");
+        uint256 vestTau = reader.readUintOptional(".vestTau");
+        uint256 vestEta = reader.readUintOptional(".vestEta");
 
         vm.startBroadcast();
 
-        if (imports.vest == address(0)) {
-            exports.vest = deployCode("DssVest.sol:DssVestMintable", abi.encode(exports.ngt));
-            VestInit.init(VestInitParams({vest: exports.vest, cap: type(uint256).max}));
+        if (vest == address(0)) {
+            vest = deployCode("DssVest.sol:DssVestMintable", abi.encode(ngt));
+            VestInit.init(VestInitParams({vest: vest, cap: type(uint256).max}));
         }
 
-        if (imports.farm == address(0)) {
-            exports.farm = StakingRewardsDeploy.deploy(
-                StakingRewardsDeployParams({owner: admin, stakingToken: exports.nst, rewardsToken: exports.ngt})
+        if (farm == address(0)) {
+            farm = StakingRewardsDeploy.deploy(
+                StakingRewardsDeployParams({owner: admin, stakingToken: nst, rewardsToken: ngt})
             );
         }
 
-        if (imports.dist == address(0)) {
-            exports.dist = VestedRewardsDistributionDeploy.deploy(
-                VestedRewardsDistributionDeployParams({
-                    deployer: msg.sender,
-                    owner: admin,
-                    vest: exports.vest,
-                    farm: exports.farm
-                })
+        if (dist == address(0)) {
+            dist = VestedRewardsDistributionDeploy.deploy(
+                VestedRewardsDistributionDeployParams({deployer: msg.sender, owner: admin, vest: vest, farm: farm})
             );
         }
 
-        StakingRewardsInit.init(StakingRewardsInitParams({farm: exports.farm, dist: exports.dist}));
+        StakingRewardsInit.init(StakingRewardsInitParams({farm: farm, dist: dist}));
 
-        exports.vestId = VestInit
-            .create(
-                VestCreateParams({
-                    vest: exports.vest,
-                    usr: exports.dist,
-                    tot: imports.vestTot,
-                    bgn: imports.vestBgn,
-                    tau: imports.vestTau,
-                    eta: imports.vestEta
-                })
-            )
-            .vestId;
+        uint256 vestId;
 
-        VestedRewardsDistributionInit.init(
-            VestedRewardsDistributionInitParams({dist: exports.dist, vestId: exports.vestId})
-        );
+        if (vestTot > 0) {
+            vestId = VestInit
+                .create(
+                    VestCreateParams({vest: vest, usr: dist, tot: vestTot, bgn: vestBgn, tau: vestTau, eta: vestEta})
+                )
+                .vestId;
+
+            VestedRewardsDistributionInit.init(VestedRewardsDistributionInitParams({dist: dist, vestId: vestId}));
+        }
 
         vm.stopBroadcast();
 
-        ScriptTools.exportContract(NAME, "admin", exports.admin);
-        ScriptTools.exportContract(NAME, "dist", exports.dist);
-        ScriptTools.exportContract(NAME, "farm", exports.farm);
-        ScriptTools.exportContract(NAME, "ngt", exports.ngt);
-        ScriptTools.exportContract(NAME, "nst", exports.nst);
-        ScriptTools.exportContract(NAME, "vest", exports.vest);
+        ScriptTools.exportContract(NAME, "admin", admin);
+        ScriptTools.exportContract(NAME, "dist", dist);
+        ScriptTools.exportContract(NAME, "farm", farm);
+        ScriptTools.exportContract(NAME, "ngt", ngt);
+        ScriptTools.exportContract(NAME, "nst", nst);
+        ScriptTools.exportContract(NAME, "vest", vest);
+        ScriptTools.exportContract(NAME, "vestId", address(uint160(vestId)));
     }
 }

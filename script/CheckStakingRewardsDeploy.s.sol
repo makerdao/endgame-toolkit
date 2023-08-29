@@ -25,6 +25,10 @@ interface WardsLike {
     function wards(address who) external view returns (uint256);
 }
 
+interface VestedRewardsDistributionLike {
+    function vestId() external view returns (uint256);
+}
+
 interface StakingRewardsLike {
     function owner() external view returns (address);
 
@@ -75,6 +79,7 @@ contract CheckStakingRewardsDeployScript is Script {
         uint256 vestEta = reader.readUint(".vestEta");
 
         require(WardsLike(dist).wards(admin) == 1, "vested-rewards-distribution/pause-proxy-not-relied");
+        require(VestedRewardsDistributionLike(dist).vestId() == vestId, "vested-rewards-distribution/invalid-vest-id");
 
         require(StakingRewardsLike(farm).owner() == admin, "staking-rewards/pause-proxy-not-owner");
         require(StakingRewardsLike(farm).rewardsToken() == ngt, "staking-rewards/invalid-rewards-token");

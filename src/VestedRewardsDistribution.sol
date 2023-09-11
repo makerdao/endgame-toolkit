@@ -20,7 +20,7 @@ import {DssVestWithGemLike} from "./interfaces/DssVestWithGemLike.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 /**
- * @title RwardsDistribution: A permissionless bridge between {DssVest} and {StakingRewards}.
+ * @title VestedRewardsDistribution: A permissionless bridge between {DssVest} and {StakingRewards}.
  * @author @amusingaxl
  */
 contract VestedRewardsDistribution {

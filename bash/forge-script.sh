@@ -16,14 +16,18 @@ run_script() {
 
 	local RESPONSE=
 	# Log the command being issued, making sure not to expose the password
-	log "forge script --json --sender "$FOUNDRY_ETH_FROM" --keystore "$FOUNDRY_ETH_KEYSTORE_FILE" $(sed 's/ .*$/ [REDACTED]/' <<<"${PASSWORD_OPT[@]}")" $(printf ' %q' "$@")
+	log "forge script --sender "$FOUNDRY_ETH_FROM" --keystore "$FOUNDRY_ETH_KEYSTORE_FILE" $(sed 's/ .*$/ [REDACTED]/' <<<"${PASSWORD_OPT[@]}")" $(printf ' %q' "$@")
 	# Currently `forge create` sends the logs to stdout instead of stderr.
 	# This makes it hard to compose its output with other commands, so here we are:
 	# 1. Duplicating stdout to stderr through `tee`
 	# 2. Extracting only the address of the deployed contract to stdout
-	RESPONSE=$(forge script --json --sender "$FOUNDRY_ETH_FROM" --keystore "$FOUNDRY_ETH_KEYSTORE_FILE" "${PASSWORD_OPT[@]}" "$@" | tee >(cat 1>&2))
+	RESPONSE=$(forge script --sender "$FOUNDRY_ETH_FROM" --keystore "$FOUNDRY_ETH_KEYSTORE_FILE" "${PASSWORD_OPT[@]}" "$@" | tee >(cat 1>&2))
 
-	jq -Rr 'fromjson?' <<<"$RESPONSE"
+	if grep -- '--json' <<<"$@" >/dev/null; then
+		jq -Rr 'fromjson?' <<<"$RESPONSE"
+	else
+		echo "$RESPONSE"
+	fi
 }
 
 check-required-etherscan-api-key() {

@@ -5,16 +5,18 @@
   ],
   "rules": {
     "prettier/prettier": "warn",
-    "max-line-length": "off",
     "check-send-result": "off",
-    "not-rely-on-time": "off",
-    "multiple-sends": "off",
+    "custom-errors": "off",
     "compiler-version": "off",
     "func-visibility": [
       "warn",
       {
         "ignoreConstructors": true
       }
-    ]
+    ],
+    "max-line-length": "off",
+    "multiple-sends": "off",
+    "not-rely-on-time": "off",
+    "one-contract-per-file": "off"
   }
 }

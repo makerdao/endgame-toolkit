@@ -21,9 +21,15 @@ import {ScriptTools} from "dss-test/ScriptTools.sol";
 
 import {ConfigReader} from "./helpers/Config.sol";
 import {StakingRewardsDeploy, StakingRewardsDeployParams} from "./dependencies/StakingRewardsDeploy.sol";
-import {VestedRewardsDistributionDeploy, VestedRewardsDistributionDeployParams} from "./dependencies/VestedRewardsDistributionDeploy.sol";
+import {
+    VestedRewardsDistributionDeploy,
+    VestedRewardsDistributionDeployParams
+} from "./dependencies/VestedRewardsDistributionDeploy.sol";
 import {StakingRewardsInit, StakingRewardsInitParams} from "./dependencies/StakingRewardsInit.sol";
-import {VestedRewardsDistributionInit, VestedRewardsDistributionInitParams} from "./dependencies/VestedRewardsDistributionInit.sol";
+import {
+    VestedRewardsDistributionInit,
+    VestedRewardsDistributionInitParams
+} from "./dependencies/VestedRewardsDistributionInit.sol";
 import {VestInit, VestInitParams, VestCreateParams} from "./dependencies/VestInit.sol";
 
 contract StakingRewardsDeployScript is Script {
@@ -31,15 +37,13 @@ contract StakingRewardsDeployScript is Script {
     using ScriptTools for string;
 
     string internal constant NAME = "StakingRewards";
-    string internal config;
 
     function run() external {
-        config = ScriptTools.loadConfig();
-        ConfigReader reader = new ConfigReader(config);
+        ConfigReader reader = new ConfigReader(ScriptTools.loadConfig());
 
-        address admin = config.readAddress(".admin");
-        address ngt = config.readAddress(".ngt");
-        address nst = config.readAddress(".nst");
+        address admin = reader.readAddress(".admin");
+        address ngt = reader.readAddress(".ngt");
+        address nst = reader.readAddress(".nst");
         address dist = reader.readAddressOptional(".dist");
         address farm = reader.readAddressOptional(".farm");
         address vest = reader.readAddressOptional(".vest");
@@ -72,11 +76,9 @@ contract StakingRewardsDeployScript is Script {
         uint256 vestId;
 
         if (vestTot > 0) {
-            vestId = VestInit
-                .create(
-                    VestCreateParams({vest: vest, usr: dist, tot: vestTot, bgn: vestBgn, tau: vestTau, eta: vestEta})
-                )
-                .vestId;
+            vestId = VestInit.create(
+                VestCreateParams({vest: vest, usr: dist, tot: vestTot, bgn: vestBgn, tau: vestTau, eta: vestEta})
+            );
 
             VestedRewardsDistributionInit.init(VestedRewardsDistributionInitParams({dist: dist, vestId: vestId}));
         }

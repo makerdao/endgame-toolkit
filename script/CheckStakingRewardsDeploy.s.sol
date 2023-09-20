@@ -59,12 +59,8 @@ contract CheckStakingRewardsDeployScript is Script {
     using stdJson for string;
     using ScriptTools for string;
 
-    string internal config;
-
     function run() external returns (bool) {
-        config = ScriptTools.loadConfig();
-
-        ConfigReader reader = new ConfigReader(config);
+        ConfigReader reader = new ConfigReader(ScriptTools.loadConfig());
 
         address admin = reader.readAddress(".admin");
         address ngt = reader.readAddress(".ngt");

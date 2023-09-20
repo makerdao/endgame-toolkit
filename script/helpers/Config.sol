@@ -21,7 +21,7 @@ contract ConfigReader {
     using stdJson for string;
 
     string internal config;
-    OptionalReader internal immutable opReader;
+    OptionalReader internal opReader;
 
     constructor(string memory _config) {
         config = _config;
@@ -32,7 +32,7 @@ contract ConfigReader {
         return stdJson.readAddress(config, key);
     }
 
-    function readUint(string memory key) external returns (uint) {
+    function readUint(string memory key) external returns (uint256) {
         return stdJson.readUint(config, key);
     }
 
@@ -66,7 +66,7 @@ contract OptionalReader {
         return stdJson.readAddress(data, key);
     }
 
-    function readUint(string memory data, string memory key) external returns (uint) {
+    function readUint(string memory data, string memory key) external returns (uint256) {
         return stdJson.readUint(data, key);
     }
 }

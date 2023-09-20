@@ -46,10 +46,6 @@ struct VestCreateParams {
     uint256 eta;
 }
 
-struct VestCreateResult {
-    uint256 vestId;
-}
-
 library VestInit {
     using ScriptTools for string;
 
@@ -57,8 +53,8 @@ library VestInit {
         DssVestLike(p.vest).file("cap", p.cap);
     }
 
-    function create(VestCreateParams memory p) internal returns (VestCreateResult memory res) {
-        res.vestId = DssVestLike(p.vest).create(
+    function create(VestCreateParams memory p) internal returns (uint256 vestId) {
+        vestId = DssVestLike(p.vest).create(
             p.usr,
             p.tot,
             p.bgn,
@@ -67,6 +63,6 @@ library VestInit {
             address(0) // mgr
         );
 
-        DssVestLike(p.vest).restrict(res.vestId);
+        DssVestLike(p.vest).restrict(vestId);
     }
 }

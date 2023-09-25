@@ -199,6 +199,8 @@ contract SDAO {
 
         unchecked {
             balanceOf[msg.sender] = balance - value;
+            // Safe as the sum of all balances equals `totalSupply`;
+            // any overflow would have occurred already when increasing `totalSupply`
             balanceOf[to] += value;
         }
 
@@ -233,6 +235,8 @@ contract SDAO {
 
         unchecked {
             balanceOf[from] = balance - value;
+            // Safe as the sum of all balances equals `totalSupply`;
+            // any overflow would have occurred already when increasing `totalSupply`
             balanceOf[to] += value;
         }
 

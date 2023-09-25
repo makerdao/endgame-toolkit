@@ -26,7 +26,13 @@ interface WardsLike {
 }
 
 interface VestedRewardsDistributionLike {
+    function dssVest() external view returns (address);
+
     function vestId() external view returns (uint256);
+
+    function stakingRewards() external view returns (address);
+
+    function gem() external view returns (address);
 }
 
 interface StakingRewardsLike {
@@ -50,6 +56,8 @@ interface DssVestWithGemLike {
 
     function fin(uint256 vestId) external view returns (uint256);
 
+    function res(uint256 vestId) external view returns (uint256);
+
     function usr(uint256 vestId) external view returns (address);
 
     function valid(uint256 _id) external view returns (bool);
@@ -72,26 +80,32 @@ contract CheckStakingRewardsDeployScript is Script {
         uint256 vestTot = reader.readUint(".vestTot");
         uint256 vestBgn = reader.readUint(".vestBgn");
         uint256 vestTau = reader.readUint(".vestTau");
-        uint256 vestEta = reader.readUint(".vestEta");
 
-        require(WardsLike(dist).wards(admin) == 1, "vested-rewards-distribution/pause-proxy-not-relied");
-        require(VestedRewardsDistributionLike(dist).vestId() == vestId, "vested-rewards-distribution/invalid-vest-id");
+        require(WardsLike(dist).wards(admin) == 1, "VestedRewardsDistribution/pause-proxy-not-relied");
+        require(VestedRewardsDistributionLike(dist).dssVest() == vest, "VestedRewardsDistribution/invalid-vest");
+        require(VestedRewardsDistributionLike(dist).vestId() == vestId, "VestedRewardsDistribution/invalid-vest-id");
+        require(VestedRewardsDistributionLike(dist).gem() == ngt, "VestedRewardsDistribution/invalid-gem");
+        require(
+            VestedRewardsDistributionLike(dist).stakingRewards() == farm,
+            "VestedRewardsDistribution/invalid-staking-rewards"
+        );
 
-        require(StakingRewardsLike(farm).owner() == admin, "staking-rewards/pause-proxy-not-owner");
-        require(StakingRewardsLike(farm).rewardsToken() == ngt, "staking-rewards/invalid-rewards-token");
-        require(StakingRewardsLike(farm).stakingToken() == nst, "staking-rewards/invalid-rewards-token");
-        require(StakingRewardsLike(farm).rewardsDistribution() == dist, "staking-rewards/invalid-rewards-distribution");
+        require(StakingRewardsLike(farm).owner() == admin, "StakingRewards/pause-proxy-not-owner");
+        require(StakingRewardsLike(farm).rewardsToken() == ngt, "StakingRewards/invalid-rewards-token");
+        require(StakingRewardsLike(farm).stakingToken() == nst, "StakingRewards/invalid-rewards-token");
+        require(StakingRewardsLike(farm).rewardsDistribution() == dist, "StakingRewards/invalid-rewards-distribution");
 
-        require(WardsLike(ngt).wards(vest) == 1, "ngt/dss-vest-not-ward");
+        require(WardsLike(ngt).wards(vest) == 1, "Ngt/dss-vest-not-ward");
 
-        require(WardsLike(vest).wards(admin) == 1, "dss-vest/pause-proxy-not-relied");
-        require(DssVestWithGemLike(vest).gem() == ngt, "dss-vest/invalid-gem");
-        require(DssVestWithGemLike(vest).valid(vestId), "dss-vest/invalid-vest-id");
-        require(DssVestWithGemLike(vest).usr(vestId) == dist, "dss-vest/wrong-dist");
-        require(DssVestWithGemLike(vest).tot(vestId) == vestTot, "dss-vest/invalid-tot");
-        require(DssVestWithGemLike(vest).bgn(vestId) == vestBgn, "dss-vest/invalid-bgn");
-        require(DssVestWithGemLike(vest).clf(vestId) == vestBgn + vestEta, "dss-vest/invalid-eta");
-        require(DssVestWithGemLike(vest).fin(vestId) == vestBgn + vestTau, "dss-vest/invalid-tau");
+        require(WardsLike(vest).wards(admin) == 1, "DssVest/pause-proxy-not-relied");
+        require(DssVestWithGemLike(vest).gem() == ngt, "DssVest/invalid-gem");
+        require(DssVestWithGemLike(vest).valid(vestId), "DssVest/invalid-vest-id");
+        require(DssVestWithGemLike(vest).res(vestId) == 1, "DssVest/invalid-vest-res");
+        require(DssVestWithGemLike(vest).usr(vestId) == dist, "DssVest/wrong-dist");
+        require(DssVestWithGemLike(vest).tot(vestId) == vestTot, "DssVest/invalid-tot");
+        require(DssVestWithGemLike(vest).bgn(vestId) == vestBgn, "DssVest/invalid-bgn");
+        require(DssVestWithGemLike(vest).clf(vestId) == vestBgn, "DssVest/eta-not-zero");
+        require(DssVestWithGemLike(vest).fin(vestId) == vestBgn + vestTau, "DssVest/invalid-tau");
 
         return true;
     }

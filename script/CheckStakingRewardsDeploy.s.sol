@@ -56,6 +56,8 @@ interface DssVestWithGemLike {
 
     function fin(uint256 vestId) external view returns (uint256);
 
+    function mgr(uint256 vestId) external view returns (address);
+
     function res(uint256 vestId) external view returns (uint256);
 
     function usr(uint256 vestId) external view returns (address);
@@ -106,6 +108,7 @@ contract CheckStakingRewardsDeployScript is Script {
         require(DssVestWithGemLike(vest).bgn(vestId) == vestBgn, "DssVest/invalid-bgn");
         require(DssVestWithGemLike(vest).clf(vestId) == vestBgn, "DssVest/eta-not-zero");
         require(DssVestWithGemLike(vest).fin(vestId) == vestBgn + vestTau, "DssVest/invalid-tau");
+        require(DssVestWithGemLike(vest).mgr(vestId) == address(0), "DssVest/mgr-should-not-be-set");
 
         return true;
     }

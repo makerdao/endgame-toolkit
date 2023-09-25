@@ -1,3 +1,11 @@
+/**
+ * NOTICE: This contract has been adapted from the original Synthetix source code:
+ *  - Upgrade Solidity version from 0.5.x to 0.8.x.
+ *
+ * Original: https://github.com/Synthetixio/synthetix/blob/5e9096ac4aea6c4249828f1e8b95e3fb9be231f8/contracts/Pausable.sol
+ *     Diff: https://www.diffchecker.com/ZxqWAZxN/
+ */
+
 // SPDX-FileCopyrightText: © 2019-2021 Synthetix
 // SPDX-FileCopyrightText: © 2023 Dai Foundation <www.daifoundation.org>
 // SPDX-License-Identifier: MIT AND AGPL-3.0-or-later

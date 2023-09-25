@@ -30,7 +30,7 @@ import {ReentrancyGuard} from "openzeppelin-contracts/security/ReentrancyGuard.s
 import {IStakingRewards} from "./interfaces/IStakingRewards.sol";
 import {Pausable} from "./utils/Pausable.sol";
 
-// https://docs.synthetix.io/contracts/source/contracts/stakingrewards
+// https://developer.synthetix.io/contracts/source/contracts/StakingRewards/
 contract StakingRewards is IStakingRewards, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 

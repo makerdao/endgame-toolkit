@@ -24,7 +24,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity 0.8.19;
 
-// https://docs.synthetix.io/contracts/source/contracts/owned
+// https://developer.synthetix.io/contracts/source/contracts/Owned/
 contract Owned {
     address public owner;
     address public nominatedOwner;

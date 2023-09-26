@@ -50,7 +50,6 @@ contract StakingRewardsDeployScript is Script {
         uint256 vestTot = reader.readUintOptional(".vestTot");
         uint256 vestBgn = reader.readUintOptional(".vestBgn");
         uint256 vestTau = reader.readUintOptional(".vestTau");
-        uint256 vestEta = reader.readUintOptional(".vestEta");
 
         vm.startBroadcast();
 
@@ -77,7 +76,7 @@ contract StakingRewardsDeployScript is Script {
 
         if (vestTot > 0) {
             vestId = VestInit.create(
-                VestCreateParams({vest: vest, usr: dist, tot: vestTot, bgn: vestBgn, tau: vestTau, eta: vestEta})
+                VestCreateParams({vest: vest, usr: dist, tot: vestTot, bgn: vestBgn, tau: vestTau, eta: 0})
             );
 
             VestedRewardsDistributionInit.init(VestedRewardsDistributionInitParams({dist: dist, vestId: vestId}));

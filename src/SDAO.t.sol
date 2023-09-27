@@ -17,7 +17,6 @@ pragma solidity 0.8.19;
 
 import {TokenFuzzTests} from "token-tests/TokenFuzzTests.sol";
 import {DssTest} from "dss-test/DssTest.sol";
-import {GodMode} from "dss-test/MCD.sol";
 import {SDAO} from "./SDAO.sol";
 
 /**

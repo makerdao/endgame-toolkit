@@ -199,7 +199,7 @@ contract SDAO {
 
         unchecked {
             balanceOf[msg.sender] = balance - value;
-            // Safe as the sum of all balances equals `totalSupply`;
+            // Note: safe as the sum of all balances is equal to `totalSupply`;
             // any overflow would have occurred already when increasing `totalSupply`
             balanceOf[to] += value;
         }
@@ -235,7 +235,7 @@ contract SDAO {
 
         unchecked {
             balanceOf[from] = balance - value;
-            // Safe as the sum of all balances equals `totalSupply`;
+            // Note: safe as the sum of all balances is equal to `totalSupply`;
             // any overflow would have occurred already when increasing `totalSupply`
             balanceOf[to] += value;
         }
@@ -265,42 +265,6 @@ contract SDAO {
         return true;
     }
 
-    /**
-     * @notice Atomically increases the allowance granted to `spender` by `msg.sender`.
-     * @dev This is an alternative to {approve} that can be used as a mitigation for problems described in {approve}.
-     * @dev Emits an {Approval} event indicating the updated allowance.
-     * @param spender The account receiving the allowance increase.
-     * @param addedValue The amount to increase the allowance.
-     */
-    function increaseAllowance(address spender, uint256 addedValue) external returns (bool) {
-        uint256 newValue = allowance[msg.sender][spender] + addedValue;
-        allowance[msg.sender][spender] = newValue;
-
-        emit Approval(msg.sender, spender, newValue);
-
-        return true;
-    }
-
-    /**
-     * @notice Atomically decreases the allowance granted to `spender` by `msg.sender`.
-     * @dev This is an alternative to {approve} that can be used as a mitigation for problems described in {approve}.
-     * @dev Emits an {Approval} event indicating the updated allowance.
-     * @param spender The account receiving the allowance decrease.
-     * @param subtractedValue The amount to decrease the allowance.
-     */
-    function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool) {
-        uint256 allowed = allowance[msg.sender][spender];
-        require(allowed >= subtractedValue, "SDAO/insufficient-allowance");
-        unchecked {
-            allowed = allowed - subtractedValue;
-        }
-        allowance[msg.sender][spender] = allowed;
-
-        emit Approval(msg.sender, spender, allowed);
-
-        return true;
-    }
-
     // --- Mint/Burn ---
 
     /**
@@ -314,7 +278,9 @@ contract SDAO {
     function mint(address to, uint256 value) external auth {
         require(to != address(0) && to != address(this), "SDAO/invalid-address");
         unchecked {
-            balanceOf[to] = balanceOf[to] + value; // note: we don't need an overflow check here b/c balanceOf[to] <= totalSupply and there is an overflow check below
+            // Note: safe as the sum of all balances is equal to `totalSupply`;
+            // there is already an overvlow check below
+            balanceOf[to] = balanceOf[to] + value;
         }
         totalSupply = totalSupply + value;
 
@@ -344,7 +310,9 @@ contract SDAO {
         }
 
         unchecked {
-            balanceOf[from] = balance - value; // note: we don't need overflow checks b/c require(balance >= value) and balance <= totalSupply
+            // Note: we don't need an underflow check here b/c `balance >= value`
+            balanceOf[from] = balance - value;
+            // Note: we don't need an underflow check here b/c `totalSupply >= balance >= totalSupply`
             totalSupply = totalSupply - value;
         }
 
@@ -377,10 +345,16 @@ contract SDAO {
             }
         }
 
-        (bool success, bytes memory result) = signer.staticcall(
-            abi.encodeWithSelector(IERC1271.isValidSignature.selector, digest, signature)
-        );
-        return (success && result.length == 32 && abi.decode(result, (bytes4)) == IERC1271.isValidSignature.selector);
+        if (signer.code.length > 0) {
+            (bool success, bytes memory result) = signer.staticcall(
+                abi.encodeCall(IERC1271.isValidSignature, (digest, signature))
+            );
+            return (success &&
+                result.length == 32 &&
+                abi.decode(result, (bytes4)) == IERC1271.isValidSignature.selector);
+        }
+
+        return false;
     }
 
     /**

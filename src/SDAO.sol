@@ -312,7 +312,7 @@ contract SDAO {
         unchecked {
             // Note: we don't need an underflow check here b/c `balance >= value`
             balanceOf[from] = balance - value;
-            // Note: we don't need an underflow check here b/c `totalSupply >= balance >= totalSupply`
+            // Note: we don't need an underflow check here b/c `totalSupply >= balance >= value`
             totalSupply = totalSupply - value;
         }
 

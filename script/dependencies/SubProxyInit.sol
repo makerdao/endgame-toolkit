@@ -22,15 +22,20 @@ interface SubProxyLike {
     function rely(address who) external;
 }
 
+struct SubProxyInitParams {
+    address chainlog;
+    string name;
+}
+
 library SubProxyInit {
     using ScriptTools for string;
 
-    function init(address chainlog, address subProxy, string memory name) internal {
-        DssInstance memory mcd = MCD.loadFromChainlog(chainlog);
-        init(mcd, subProxy, name);
+    function init(address subProxy, SubProxyInitParams memory p) internal {
+        DssInstance memory mcd = MCD.loadFromChainlog(p.chainlog);
+        init(subProxy, mcd, p.name);
     }
 
-    function init(DssInstance memory mcd, address subProxy, string memory name) internal {
+    function init(address subProxy, DssInstance memory mcd, string memory name) internal {
         // Rely on `MCD_ESM` to allow `deny`ing `MCD_PAUSE_PROXY` after Emergency Shutdown.
         SubProxyLike(subProxy).rely(address(mcd.esm));
         // Add `SUBPROXY_{NAME}` to the chainlog.

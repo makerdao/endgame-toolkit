@@ -19,7 +19,7 @@ import {Script} from "forge-std/Script.sol";
 import {stdJson} from "forge-std/StdJson.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 
-import {ConfigReader} from "./helpers/Config.sol";
+import {Reader} from "./helpers/Reader.sol";
 
 interface WardsLike {
     function wards(address who) external view returns (uint256);
@@ -65,23 +65,24 @@ interface DssVestWithGemLike {
     function valid(uint256 _id) external view returns (bool);
 }
 
-contract CheckStakingRewardsDeployScript is Script {
+contract Phase0CheckStakingRewardsDeploymentScript is Script {
     using stdJson for string;
     using ScriptTools for string;
 
     function run() external returns (bool) {
-        ConfigReader reader = new ConfigReader(ScriptTools.loadConfig());
+        Reader deps = new Reader("");
+        deps.loadDependenciesOrConfig();
 
-        address admin = reader.readAddress(".admin");
-        address ngt = reader.readAddress(".ngt");
-        address nst = reader.readAddress(".nst");
-        address dist = reader.readAddress(".dist");
-        address farm = reader.readAddress(".farm");
-        address vest = reader.readAddress(".vest");
-        uint256 vestId = reader.readUint(".vestId");
-        uint256 vestTot = reader.readUint(".vestTot");
-        uint256 vestBgn = reader.readUint(".vestBgn");
-        uint256 vestTau = reader.readUint(".vestTau");
+        address admin = deps.envOrReadAddress(".admin", "FOUNDRY_ADMIN");
+        address ngt = deps.envOrReadAddress(".ngt", "FOUNDRY_NGT");
+        address nst = deps.envOrReadAddress(".nst", "FOUNDRY_NST");
+        address dist = deps.readAddress(".dist");
+        address farm = deps.readAddress(".farm");
+        address vest = deps.readAddress(".vest");
+        uint256 vestId = deps.readUint(".vestId");
+        uint256 vestTot = deps.readUint(".vestTot");
+        uint256 vestBgn = deps.readUint(".vestBgn");
+        uint256 vestTau = deps.readUint(".vestTau");
 
         require(WardsLike(dist).wards(admin) == 1, "VestedRewardsDistribution/pause-proxy-not-relied");
         require(VestedRewardsDistributionLike(dist).dssVest() == vest, "VestedRewardsDistribution/invalid-vest");

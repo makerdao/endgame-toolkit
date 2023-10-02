@@ -24,7 +24,7 @@ struct StakingRewardsDeployParams {
 }
 
 library StakingRewardsDeploy {
-    function deploy(StakingRewardsDeployParams memory p) internal returns (address stakingRewards) {
-        stakingRewards = address(new StakingRewards(p.owner, address(0), p.rewardsToken, p.stakingToken));
+    function deploy(StakingRewardsDeployParams memory p) internal returns (address farm) {
+        farm = address(new StakingRewards(p.owner, address(0), p.rewardsToken, p.stakingToken));
     }
 }

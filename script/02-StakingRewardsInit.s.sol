@@ -48,10 +48,10 @@ contract Phase0StakingRewardsInitScript is Script {
     function run() external {
         Reader deps = new Reader(ScriptTools.loadDependencies());
 
-        address ngt = deps.readAddress(".ngt");
-        address dist = deps.readAddress(".dist");
-        address farm = deps.readAddress(".farm");
-        address vest = deps.readAddress(".vest");
+        address ngt = deps.envOrReadAddress(".ngt", "FOUNDRY_NGT");
+        address dist = deps.envOrReadAddress(".dist", "FOUNDRY_DIST");
+        address farm = deps.envOrReadAddress(".farm", "FOUNDRY_FARM");
+        address vest = deps.envOrReadAddress(".vest", "FOUNDRY_VEST");
 
         Reader config = new Reader(ScriptTools.loadConfig());
 

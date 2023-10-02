@@ -35,9 +35,9 @@ contract Phase0StakingRewardsDeployScript is Script {
     function run() external {
         Reader reader = new Reader(ScriptTools.loadConfig());
 
-        address admin = reader.readAddress(".admin");
-        address ngt = reader.readAddress(".ngt");
-        address nst = reader.readAddress(".nst");
+        address admin = reader.envOrReadAddress(".admin", "FOUNDRY_ADMIN");
+        address ngt = reader.envOrReadAddress(".ngt", "FOUNDRY_NGT");
+        address nst = reader.envOrReadAddress(".nst", "FOUNDRY_NST");
         address dist = reader.readAddressOptional(".dist");
         address farm = reader.readAddressOptional(".farm");
         address vest = reader.readAddressOptional(".vest");

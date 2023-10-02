@@ -31,8 +31,8 @@ library SubProxyInit {
     }
 
     function init(DssInstance memory mcd, address subProxy, string memory name) internal {
-        // Rely on `MCD_END` to allow `deny`ing `MCD_PAUSE_PROXY` after Emergency Shutdown.
-        SubProxyLike(subProxy).rely(address(mcd.end));
+        // Rely on `MCD_ESM` to allow `deny`ing `MCD_PAUSE_PROXY` after Emergency Shutdown.
+        SubProxyLike(subProxy).rely(address(mcd.esm));
         // Add `SUBPROXY_{NAME}` to the chainlog.
         mcd.chainlog.setAddress(string.concat("SUBPROXY_", name).stringToBytes32(), subProxy);
     }

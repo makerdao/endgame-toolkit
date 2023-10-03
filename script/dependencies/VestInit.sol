@@ -33,12 +33,10 @@ interface DssVestLike {
 }
 
 struct VestInitParams {
-    address vest;
     uint256 cap;
 }
 
 struct VestCreateParams {
-    address vest;
     address usr;
     uint256 tot;
     uint256 bgn;
@@ -49,12 +47,12 @@ struct VestCreateParams {
 library VestInit {
     using ScriptTools for string;
 
-    function init(VestInitParams memory p) internal {
-        DssVestLike(p.vest).file("cap", p.cap);
+    function init(address vest, VestInitParams memory p) internal {
+        DssVestLike(vest).file("cap", p.cap);
     }
 
-    function create(VestCreateParams memory p) internal returns (uint256 vestId) {
-        vestId = DssVestLike(p.vest).create(
+    function create(address vest, VestCreateParams memory p) internal returns (uint256 vestId) {
+        vestId = DssVestLike(vest).create(
             p.usr,
             p.tot,
             p.bgn,
@@ -63,6 +61,6 @@ library VestInit {
             address(0) // mgr
         );
 
-        DssVestLike(p.vest).restrict(vestId);
+        DssVestLike(vest).restrict(vestId);
     }
 }

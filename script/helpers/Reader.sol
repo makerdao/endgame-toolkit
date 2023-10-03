@@ -15,23 +15,44 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity ^0.8.0;
 
+import {Vm} from "forge-std/Vm.sol";
 import {stdJson} from "forge-std/StdJson.sol";
+import {ScriptTools} from "dss-test/ScriptTools.sol";
 
-contract ConfigReader {
+contract Reader {
     using stdJson for string;
 
-    string internal config;
+    Vm private constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
+    string internal data;
 
-    constructor(string memory _config) {
-        config = _config;
+    constructor(string memory _data) {
+        data = _data;
+    }
+
+    function loadConfig() external {
+        data = ScriptTools.loadConfig();
+    }
+
+    function loadDependencies() external {
+        data = ScriptTools.loadDependencies();
+    }
+
+    function loadDependenciesOrConfig() external {
+        try this.loadDependencies() {
+            if (bytes(data).length == 0) {
+                revert("");
+            }
+        } catch {
+            this.loadConfig();
+        }
     }
 
     function readAddress(string memory key) external returns (address) {
-        return config.readAddress(key);
+        return data.readAddress(key);
     }
 
     function readUint(string memory key) external returns (uint256) {
-        return config.readUint(key);
+        return data.readUint(key);
     }
 
     function readAddressOptional(string memory key) external returns (address) {
@@ -55,6 +76,22 @@ contract ConfigReader {
             return result;
         } catch {
             return def;
+        }
+    }
+
+    function envOrReadAddress(string memory key, string memory envKey) external returns (address) {
+        try vm.envAddress(envKey) returns (address addr) {
+            return addr;
+        } catch {
+            return this.readAddress(key);
+        }
+    }
+
+    function envOrReadUint(string memory key, string memory envKey) external returns (uint256) {
+        try vm.envUint(envKey) returns (uint256 n) {
+            return n;
+        } catch {
+            return this.readUint(key);
         }
     }
 }

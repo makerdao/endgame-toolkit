@@ -18,10 +18,15 @@ pragma solidity ^0.8.0;
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 import {SubProxy} from "../../src/SubProxy.sol";
 
+struct SubProxyDeployParams {
+    address deployer;
+    address owner;
+}
+
 library SubProxyDeploy {
-    function deploy(address deployer, address owner) internal returns (address subProxy) {
+    function deploy(SubProxyDeployParams memory p) internal returns (address subProxy) {
         subProxy = address(new SubProxy());
 
-        ScriptTools.switchOwner(subProxy, deployer, owner);
+        ScriptTools.switchOwner(subProxy, p.deployer, p.owner);
     }
 }

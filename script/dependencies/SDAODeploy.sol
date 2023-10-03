@@ -18,15 +18,17 @@ pragma solidity ^0.8.0;
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 import {SDAO} from "../../src/SDAO.sol";
 
-library SDAODeploy {
-    function deploy(
-        address deployer,
-        address owner,
-        string memory name,
-        string memory symbol
-    ) internal returns (address token) {
-        token = address(new SDAO(name, symbol));
+struct SDAODeployParams {
+    address deployer;
+    address owner;
+    string name;
+    string symbol;
+}
 
-        ScriptTools.switchOwner(token, deployer, owner);
+library SDAODeploy {
+    function deploy(SDAODeployParams memory p) internal returns (address sdao) {
+        sdao = address(new SDAO(p.name, p.symbol));
+
+        ScriptTools.switchOwner(sdao, p.deployer, p.owner);
     }
 }

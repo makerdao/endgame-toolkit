@@ -17,15 +17,32 @@ pragma solidity ^0.8.0;
 
 interface StakingRewardsLike {
     function setRewardsDistribution(address _rewardsDistribution) external;
+
+    function acceptOwnership() external;
+
+    function nominateNewOwner(address _owner) external;
 }
 
 struct StakingRewardsInitParams {
-    address farm;
     address dist;
 }
 
+struct StakingRewardsNominateNewOwnerParams {
+    address newOwner;
+}
+
 library StakingRewardsInit {
-    function init(StakingRewardsInitParams memory p) internal {
-        StakingRewardsLike(p.farm).setRewardsDistribution(p.dist);
+    function init(address farm, StakingRewardsInitParams memory p) internal {
+        StakingRewardsLike(farm).setRewardsDistribution(p.dist);
+    }
+
+    /// @dev `StakingRewards` ownership transfer is a 2-step process: nominate + acceptance.
+    function nominateNewOwner(address farm, StakingRewardsNominateNewOwnerParams memory p) internal {
+        StakingRewardsLike(farm).nominateNewOwner(p.newOwner);
+    }
+
+    /// @dev `StakingRewards` ownership transfer requires the new owner to explicitly accept it.
+    function acceptOwnership(address farm) internal {
+        StakingRewardsLike(farm).acceptOwnership();
     }
 }

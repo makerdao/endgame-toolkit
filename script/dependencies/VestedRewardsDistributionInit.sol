@@ -20,12 +20,11 @@ interface VestedRewardsDistributionLike {
 }
 
 struct VestedRewardsDistributionInitParams {
-    address dist;
     uint256 vestId;
 }
 
 library VestedRewardsDistributionInit {
-    function init(VestedRewardsDistributionInitParams memory p) internal {
-        VestedRewardsDistributionLike(p.dist).file("vestId", p.vestId);
+    function init(address dist, VestedRewardsDistributionInitParams memory p) internal {
+        VestedRewardsDistributionLike(dist).file("vestId", p.vestId);
     }
 }

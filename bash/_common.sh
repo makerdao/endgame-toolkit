@@ -34,7 +34,7 @@ normalize-env-vars() {
 		export FOUNDRY_ETH_KEYSTORE_FILE="${FOUNDRY_ETH_KEYSTORE_DIR%/}/$(ls -1 $FOUNDRY_ETH_KEYSTORE_DIR |
 			# -i: case insensitive
 			# #0x: strip the 0x prefix from the the address
-			grep -i ${FOUNDRY_ETH_FROM#0x})"
+			grep -i ${FOUNDRY_ETH_FROM#0x} | head -1)"
 	fi
 
 	[ -n "$FOUNDRY_ETH_KEYSTORE_FILE" ] || die "$(err-msg-keystore-file)"

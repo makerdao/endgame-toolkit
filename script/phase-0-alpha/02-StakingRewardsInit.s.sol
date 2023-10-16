@@ -16,16 +16,15 @@
 pragma solidity ^0.8.0;
 
 import {Script} from "forge-std/Script.sol";
-import {stdJson} from "forge-std/StdJson.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 
-import {Reader} from "./helpers/Reader.sol";
-import {StakingRewardsInit, StakingRewardsInitParams} from "./dependencies/StakingRewardsInit.sol";
+import {Reader} from "../helpers/Reader.sol";
+import {StakingRewardsInit, StakingRewardsInitParams} from "../dependencies/StakingRewardsInit.sol";
 import {
     VestedRewardsDistributionInit,
     VestedRewardsDistributionInitParams
-} from "./dependencies/VestedRewardsDistributionInit.sol";
-import {VestInit, VestInitParams, VestCreateParams} from "./dependencies/VestInit.sol";
+} from "../dependencies/VestedRewardsDistributionInit.sol";
+import {VestInit, VestInitParams, VestCreateParams} from "../dependencies/VestInit.sol";
 
 interface RelyLike {
     function rely(address who) external;
@@ -51,11 +50,8 @@ interface VestedRewardsDistributionLike {
     function stakingRewards() external view returns (address);
 }
 
-contract Phase0StakingRewardsInitScript is Script {
-    using stdJson for string;
-    using ScriptTools for string;
-
-    string internal constant NAME = "Phase0StakingRewardsInit";
+contract Phase0Alpha_StakingRewardsInitScript is Script {
+    string internal constant NAME = "phase-0-alpha/staking-rewards-init";
 
     function run() external {
         Reader deps = new Reader(ScriptTools.loadDependencies());

@@ -16,21 +16,17 @@
 pragma solidity ^0.8.0;
 
 import {Script} from "forge-std/Script.sol";
-import {stdJson} from "forge-std/StdJson.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 
-import {Reader} from "./helpers/Reader.sol";
-import {StakingRewardsDeploy, StakingRewardsDeployParams} from "./dependencies/StakingRewardsDeploy.sol";
+import {Reader} from "../helpers/Reader.sol";
+import {StakingRewardsDeploy, StakingRewardsDeployParams} from "../dependencies/StakingRewardsDeploy.sol";
 import {
     VestedRewardsDistributionDeploy,
     VestedRewardsDistributionDeployParams
-} from "./dependencies/VestedRewardsDistributionDeploy.sol";
+} from "../dependencies/VestedRewardsDistributionDeploy.sol";
 
-contract Phase0StakingRewardsDeployScript is Script {
-    using stdJson for string;
-    using ScriptTools for string;
-
-    string internal constant NAME = "Phase0StakingRewardsDeploy";
+contract Phase0Alpha_StakingRewardsDeployScript is Script {
+    string internal constant NAME = "phase-0-alpha/staking-rewards-deploy";
 
     function run() external {
         Reader reader = new Reader(ScriptTools.loadConfig());

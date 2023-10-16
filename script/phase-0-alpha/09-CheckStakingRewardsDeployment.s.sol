@@ -16,10 +16,8 @@
 pragma solidity ^0.8.0;
 
 import {Script} from "forge-std/Script.sol";
-import {stdJson} from "forge-std/StdJson.sol";
-import {ScriptTools} from "dss-test/ScriptTools.sol";
 
-import {Reader} from "./helpers/Reader.sol";
+import {Reader} from "../helpers/Reader.sol";
 
 interface WardsLike {
     function wards(address who) external view returns (uint256);
@@ -65,10 +63,7 @@ interface DssVestWithGemLike {
     function valid(uint256 _id) external view returns (bool);
 }
 
-contract Phase0CheckStakingRewardsDeploymentScript is Script {
-    using stdJson for string;
-    using ScriptTools for string;
-
+contract Phase0Alpha_CheckStakingRewardsDeploymentScript is Script {
     function run() external returns (bool) {
         Reader deps = new Reader("");
         deps.loadDependenciesOrConfig();

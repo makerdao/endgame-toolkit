@@ -31,12 +31,22 @@ interface RelyLike {
     function rely(address who) external;
 }
 
-interface WithGemLike {
+interface DssVestWithGemLike {
     function gem() external view returns (address);
 }
 
 interface StakingRewardsLike {
     function rewardsToken() external view returns (address);
+
+    function stakingToken() external view returns (address);
+}
+
+interface VestedRewardsDistributionLike {
+    function dssVest() external view returns (address);
+
+    function gem() external view returns (address);
+
+    function stakingRewards() external view returns (address);
 }
 
 contract Phase0StakingRewardsInitScript is Script {
@@ -49,6 +59,7 @@ contract Phase0StakingRewardsInitScript is Script {
         Reader deps = new Reader(ScriptTools.loadDependencies());
 
         address ngt = deps.envOrReadAddress(".ngt", "FOUNDRY_NGT");
+        address nst = deps.envOrReadAddress(".nst", "FOUNDRY_NST");
         address dist = deps.envOrReadAddress(".dist", "FOUNDRY_DIST");
         address farm = deps.envOrReadAddress(".farm", "FOUNDRY_FARM");
         address vest = deps.envOrReadAddress(".vest", "FOUNDRY_VEST");
@@ -60,11 +71,19 @@ contract Phase0StakingRewardsInitScript is Script {
         uint256 vestBgn = config.readUint(".vestBgn");
         uint256 vestTau = config.readUint(".vestTau");
 
-        require(WithGemLike(dist).gem() == ngt, "VestedRewardsDistribution/invalid-gem");
-        require(WithGemLike(vest).gem() == ngt, "DssVest/invalid-gem");
-        require(StakingRewardsLike(farm).rewardsToken() == ngt, "StakingRewards/invalid-rewards-token");
-
         vm.startBroadcast();
+
+        require(DssVestWithGemLike(vest).gem() == ngt, "DssVest/invalid-gem");
+
+        require(StakingRewardsLike(farm).rewardsToken() == ngt, "StakingRewards/invalid-rewards-token");
+        require(StakingRewardsLike(farm).stakingToken() == nst, "StakingRewards/invalid-staking-token");
+
+        require(VestedRewardsDistributionLike(dist).gem() == ngt, "VestedRewardsDistribution/invalid-gem");
+        require(VestedRewardsDistributionLike(dist).dssVest() == vest, "VestedRewardsDistribution/invalid-dss-vest");
+        require(
+            VestedRewardsDistributionLike(dist).stakingRewards() == farm,
+            "VestedRewardsDistribution/invalid-staking-rewards"
+        );
 
         // Grant minting rights on `ngt` to `vest`.
         RelyLike(ngt).rely(vest);

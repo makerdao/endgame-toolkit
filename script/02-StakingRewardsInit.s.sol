@@ -36,6 +36,8 @@ interface DssVestWithGemLike {
 }
 
 interface StakingRewardsLike {
+    function lastUpdateTime() external view returns (uint256);
+
     function rewardsToken() external view returns (address);
 
     function stakingToken() external view returns (address);
@@ -77,6 +79,7 @@ contract Phase0StakingRewardsInitScript is Script {
 
         require(StakingRewardsLike(farm).rewardsToken() == ngt, "StakingRewards/invalid-rewards-token");
         require(StakingRewardsLike(farm).stakingToken() == nst, "StakingRewards/invalid-staking-token");
+        require(StakingRewardsLike(farm).lastUpdateTime() == 0, "StakingRewards/invalid-last-update-time");
 
         require(VestedRewardsDistributionLike(dist).gem() == ngt, "VestedRewardsDistribution/invalid-gem");
         require(VestedRewardsDistributionLike(dist).dssVest() == vest, "VestedRewardsDistribution/invalid-dss-vest");

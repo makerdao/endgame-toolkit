@@ -50,7 +50,7 @@ library FarmingInit {
         );
 
         // Check if minting rights on `ngt` were granted to `vest`.
-        require(WardsLike(p.ngt).wards(p.vest), "FarmingInit/missing-ngt-rely-vest");
+        require(WardsLike(p.ngt).wards(p.vest) == 1, "FarmingInit/missing-ngt-rely-vest");
 
         // Set `dist` with  `rewardsDistribution` role in `farm`.
         StakingRewardsInit.init(p.farm, StakingRewardsInitParams({dist: p.dist}));

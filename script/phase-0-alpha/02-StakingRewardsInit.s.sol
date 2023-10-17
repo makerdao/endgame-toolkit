@@ -19,36 +19,7 @@ import {Script} from "forge-std/Script.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 
 import {Reader} from "../helpers/Reader.sol";
-import {StakingRewardsInit, StakingRewardsInitParams} from "../dependencies/StakingRewardsInit.sol";
-import {
-    VestedRewardsDistributionInit,
-    VestedRewardsDistributionInitParams
-} from "../dependencies/VestedRewardsDistributionInit.sol";
-import {VestInit, VestInitParams, VestCreateParams} from "../dependencies/VestInit.sol";
-
-interface RelyLike {
-    function rely(address who) external;
-}
-
-interface DssVestWithGemLike {
-    function gem() external view returns (address);
-}
-
-interface StakingRewardsLike {
-    function lastUpdateTime() external view returns (uint256);
-
-    function rewardsToken() external view returns (address);
-
-    function stakingToken() external view returns (address);
-}
-
-interface VestedRewardsDistributionLike {
-    function dssVest() external view returns (address);
-
-    function gem() external view returns (address);
-
-    function stakingRewards() external view returns (address);
-}
+import {FarmingInit, FarmingInitParams} from "../dependencies/phase-0-alpha/FarmingInit.sol";
 
 contract Phase0Alpha_StakingRewardsInitScript is Script {
     string internal constant NAME = "phase-0-alpha/staking-rewards-init";
@@ -71,36 +42,21 @@ contract Phase0Alpha_StakingRewardsInitScript is Script {
 
         vm.startBroadcast();
 
-        require(DssVestWithGemLike(vest).gem() == ngt, "DssVest/invalid-gem");
-
-        require(StakingRewardsLike(farm).rewardsToken() == ngt, "StakingRewards/invalid-rewards-token");
-        require(StakingRewardsLike(farm).stakingToken() == nst, "StakingRewards/invalid-staking-token");
-        require(StakingRewardsLike(farm).lastUpdateTime() == 0, "StakingRewards/invalid-last-update-time");
-
-        require(VestedRewardsDistributionLike(dist).gem() == ngt, "VestedRewardsDistribution/invalid-gem");
-        require(VestedRewardsDistributionLike(dist).dssVest() == vest, "VestedRewardsDistribution/invalid-dss-vest");
-        require(
-            VestedRewardsDistributionLike(dist).stakingRewards() == farm,
-            "VestedRewardsDistribution/invalid-staking-rewards"
-        );
-
-        // Grant minting rights on `ngt` to `vest`.
-        RelyLike(ngt).rely(vest);
-
-        // Define global max vesting ratio on `vest`.
-        VestInit.init(vest, VestInitParams({cap: vestCap}));
-
-        // Set `dist` with  `rewardsDistribution` role in `farm`.
-        StakingRewardsInit.init(farm, StakingRewardsInitParams({dist: dist}));
-
-        // Create the proper vesting stream for rewards distribution.
-        uint256 vestId = VestInit.create(
-            vest,
-            VestCreateParams({usr: dist, tot: vestTot, bgn: vestBgn, tau: vestTau, eta: 0})
-        );
-
-        // Set the `vestId` in `dist`
-        VestedRewardsDistributionInit.init(dist, VestedRewardsDistributionInitParams({vestId: vestId}));
+        uint256 vestId = FarmingInit
+            .init(
+                FarmingInitParams({
+                    ngt: ngt,
+                    nst: nst,
+                    dist: dist,
+                    farm: farm,
+                    vest: vest,
+                    vestCap: vestCap,
+                    vestTot: vestTot,
+                    vestBgn: vestBgn,
+                    vestTau: vestTau
+                })
+            )
+            .vestId;
 
         vm.stopBroadcast();
 

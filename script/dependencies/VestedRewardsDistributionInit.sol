@@ -15,10 +15,6 @@
 
 pragma solidity ^0.8.0;
 
-interface VestedRewardsDistributionLike {
-    function file(bytes32 what, uint256 data) external;
-}
-
 struct VestedRewardsDistributionInitParams {
     uint256 vestId;
 }
@@ -27,4 +23,8 @@ library VestedRewardsDistributionInit {
     function init(address dist, VestedRewardsDistributionInitParams memory p) internal {
         VestedRewardsDistributionLike(dist).file("vestId", p.vestId);
     }
+}
+
+interface VestedRewardsDistributionLike {
+    function file(bytes32 what, uint256 data) external;
 }

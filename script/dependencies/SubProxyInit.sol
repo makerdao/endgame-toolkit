@@ -18,10 +18,6 @@ pragma solidity ^0.8.0;
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 import {DssInstance, MCD} from "dss-test/MCD.sol";
 
-interface SubProxyLike {
-    function rely(address who) external;
-}
-
 struct SubProxyInitParams {
     address chainlog;
     string name;
@@ -41,4 +37,8 @@ library SubProxyInit {
         // Add `SUBPROXY_{NAME}` to the chainlog.
         mcd.chainlog.setAddress(string.concat("SUBPROXY_", name).stringToBytes32(), subProxy);
     }
+}
+
+interface SubProxyLike {
+    function rely(address who) external;
 }

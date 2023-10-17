@@ -17,21 +17,6 @@ pragma solidity ^0.8.0;
 
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 
-interface DssVestLike {
-    function file(bytes32 _what, uint256 _data) external;
-
-    function create(
-        address _usr,
-        uint256 _tot,
-        uint256 _bgn,
-        uint256 _tau,
-        uint256 _eta,
-        address _mgr
-    ) external returns (uint256 id);
-
-    function restrict(uint256 _id) external;
-}
-
 struct VestInitParams {
     uint256 cap;
 }
@@ -63,4 +48,19 @@ library VestInit {
 
         DssVestLike(vest).restrict(vestId);
     }
+}
+
+interface DssVestLike {
+    function file(bytes32 _what, uint256 _data) external;
+
+    function create(
+        address _usr,
+        uint256 _tot,
+        uint256 _bgn,
+        uint256 _tau,
+        uint256 _eta,
+        address _mgr
+    ) external returns (uint256 id);
+
+    function restrict(uint256 _id) external;
 }

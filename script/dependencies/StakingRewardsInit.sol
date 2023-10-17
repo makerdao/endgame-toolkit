@@ -15,14 +15,6 @@
 
 pragma solidity ^0.8.0;
 
-interface StakingRewardsLike {
-    function setRewardsDistribution(address _rewardsDistribution) external;
-
-    function acceptOwnership() external;
-
-    function nominateNewOwner(address _owner) external;
-}
-
 struct StakingRewardsInitParams {
     address dist;
 }
@@ -45,4 +37,12 @@ library StakingRewardsInit {
     function acceptOwnership(address farm) internal {
         StakingRewardsLike(farm).acceptOwnership();
     }
+}
+
+interface StakingRewardsLike {
+    function setRewardsDistribution(address _rewardsDistribution) external;
+
+    function acceptOwnership() external;
+
+    function nominateNewOwner(address _owner) external;
 }

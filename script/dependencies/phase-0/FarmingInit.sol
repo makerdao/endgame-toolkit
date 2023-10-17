@@ -22,7 +22,7 @@ import {VestInit, VestCreateParams} from "../VestInit.sol";
 struct FarmingInitParams {
     address nst;
     address ngt;
-    address farm;
+    address rewards;
     address dist;
     address vest;
     uint256 vestTot;
@@ -38,22 +38,22 @@ library FarmingInit {
     function init(FarmingInitParams memory p) internal returns (FarmingInitResult memory r) {
         require(DssVestWithGemLike(p.vest).gem() == p.ngt, "FarmingInit/vest-gem-mismatch");
 
-        require(StakingRewardsLike(p.farm).rewardsToken() == p.ngt, "FarmingInit/farm-rewards-token-mismatch");
-        require(StakingRewardsLike(p.farm).stakingToken() == p.nst, "FarmingInit/farm-staking-token-mismatch");
-        require(StakingRewardsLike(p.farm).lastUpdateTime() == 0, "FarmingInit/farm-last-update-time-invalid");
+        require(StakingRewardsLike(p.rewards).rewardsToken() == p.ngt, "FarmingInit/rewards-rewards-token-mismatch");
+        require(StakingRewardsLike(p.rewards).stakingToken() == p.nst, "FarmingInit/rewards-staking-token-mismatch");
+        require(StakingRewardsLike(p.rewards).lastUpdateTime() == 0, "FarmingInit/rewards-last-update-time-invalid");
 
         require(VestedRewardsDistributionLike(p.dist).gem() == p.ngt, "FarmingInit/dist-gem-mismatch");
         require(VestedRewardsDistributionLike(p.dist).dssVest() == p.vest, "FarmingInit/dist-dss-vest-mismatch");
         require(
-            VestedRewardsDistributionLike(p.dist).stakingRewards() == p.farm,
+            VestedRewardsDistributionLike(p.dist).stakingRewards() == p.rewards,
             "FarmingInit/dist-staking-rewards-mismatch"
         );
 
         // Check if minting rights on `ngt` were granted to `vest`.
         require(WardsLike(p.ngt).wards(p.vest) == 1, "FarmingInit/missing-ngt-rely-vest");
 
-        // Set `dist` with  `rewardsDistribution` role in `farm`.
-        StakingRewardsInit.init(p.farm, StakingRewardsInitParams({dist: p.dist}));
+        // Set `dist` with  `rewardsDistribution` role in `rewards`.
+        StakingRewardsInit.init(p.rewards, StakingRewardsInitParams({dist: p.dist}));
 
         // Create the proper vesting stream for rewards distribution.
         uint256 vestId = VestInit.create(

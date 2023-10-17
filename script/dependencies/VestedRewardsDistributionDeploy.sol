@@ -22,12 +22,12 @@ struct VestedRewardsDistributionDeployParams {
     address deployer;
     address owner;
     address vest;
-    address farm;
+    address rewards;
 }
 
 library VestedRewardsDistributionDeploy {
     function deploy(VestedRewardsDistributionDeployParams memory p) internal returns (address dist) {
-        dist = address(new VestedRewardsDistribution(p.vest, p.farm));
+        dist = address(new VestedRewardsDistribution(p.vest, p.rewards));
 
         ScriptTools.switchOwner(dist, p.deployer, p.owner);
     }

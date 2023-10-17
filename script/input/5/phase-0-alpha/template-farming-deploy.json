@@ -3,6 +3,6 @@
   "ngt": "address",
   "nst": "address",
   "dist": "address",
-  "farm": "address",
+  "rewards": "address",
   "vest": "address"
 }

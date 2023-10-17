@@ -3,7 +3,7 @@
   "ngt": "address",
   "nst": "address",
   "dist": "address",
-  "farm": "address",
+  "rewards": "address",
   "vest": "address",
   "vestId": "uint256",
   "vestTot": "uint256: total amount of the vesting stream",

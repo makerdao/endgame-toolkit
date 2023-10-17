@@ -27,7 +27,7 @@ contract Phase0Alpha_FarmingCheckScript is Script {
         address ngt = deps.envOrReadAddress(".ngt", "FOUNDRY_NGT");
         address nst = deps.envOrReadAddress(".nst", "FOUNDRY_NST");
         address dist = deps.readAddress(".dist");
-        address farm = deps.readAddress(".farm");
+        address rewards = deps.readAddress(".rewards");
         address vest = deps.readAddress(".vest");
         uint256 vestId = deps.readUint(".vestId");
         uint256 vestTot = deps.readUint(".vestTot");
@@ -39,14 +39,17 @@ contract Phase0Alpha_FarmingCheckScript is Script {
         require(VestedRewardsDistributionLike(dist).vestId() == vestId, "VestedRewardsDistribution/invalid-vest-id");
         require(VestedRewardsDistributionLike(dist).gem() == ngt, "VestedRewardsDistribution/invalid-gem");
         require(
-            VestedRewardsDistributionLike(dist).stakingRewards() == farm,
+            VestedRewardsDistributionLike(dist).stakingRewards() == rewards,
             "VestedRewardsDistribution/invalid-staking-rewards"
         );
 
-        require(StakingRewardsLike(farm).owner() == admin, "StakingRewards/pause-proxy-not-owner");
-        require(StakingRewardsLike(farm).rewardsToken() == ngt, "StakingRewards/invalid-rewards-token");
-        require(StakingRewardsLike(farm).stakingToken() == nst, "StakingRewards/invalid-rewards-token");
-        require(StakingRewardsLike(farm).rewardsDistribution() == dist, "StakingRewards/invalid-rewards-distribution");
+        require(StakingRewardsLike(rewards).owner() == admin, "StakingRewards/pause-proxy-not-owner");
+        require(StakingRewardsLike(rewards).rewardsToken() == ngt, "StakingRewards/invalid-rewards-token");
+        require(StakingRewardsLike(rewards).stakingToken() == nst, "StakingRewards/invalid-rewards-token");
+        require(
+            StakingRewardsLike(rewards).rewardsDistribution() == dist,
+            "StakingRewards/invalid-rewards-distribution"
+        );
 
         require(WardsLike(ngt).wards(vest) == 1, "Ngt/dss-vest-not-ward");
 

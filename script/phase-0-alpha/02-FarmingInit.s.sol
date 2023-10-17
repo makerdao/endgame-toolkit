@@ -30,7 +30,7 @@ contract Phase0Alpha_FarmingInitScript is Script {
         address ngt = deps.envOrReadAddress(".ngt", "FOUNDRY_NGT");
         address nst = deps.envOrReadAddress(".nst", "FOUNDRY_NST");
         address dist = deps.envOrReadAddress(".dist", "FOUNDRY_DIST");
-        address farm = deps.envOrReadAddress(".farm", "FOUNDRY_FARM");
+        address rewards = deps.envOrReadAddress(".rewards", "FOUNDRY_FARM");
         address vest = deps.envOrReadAddress(".vest", "FOUNDRY_VEST");
 
         Reader config = new Reader(ScriptTools.loadConfig());
@@ -48,7 +48,7 @@ contract Phase0Alpha_FarmingInitScript is Script {
                     ngt: ngt,
                     nst: nst,
                     dist: dist,
-                    farm: farm,
+                    rewards: rewards,
                     vest: vest,
                     vestCap: vestCap,
                     vestTot: vestTot,
@@ -62,7 +62,7 @@ contract Phase0Alpha_FarmingInitScript is Script {
 
         ScriptTools.exportContract(NAME, "ngt", ngt);
         ScriptTools.exportContract(NAME, "dist", dist);
-        ScriptTools.exportContract(NAME, "farm", farm);
+        ScriptTools.exportContract(NAME, "rewards", rewards);
         ScriptTools.exportContract(NAME, "vest", vest);
         ScriptTools.exportContract(NAME, "vestId", address(uint160(vestId)));
         ScriptTools.exportContract(NAME, "vestTot", address(uint160(vestTot)));

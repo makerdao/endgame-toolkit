@@ -24,18 +24,18 @@ struct StakingRewardsNominateNewOwnerParams {
 }
 
 library StakingRewardsInit {
-    function init(address farm, StakingRewardsInitParams memory p) internal {
-        StakingRewardsLike(farm).setRewardsDistribution(p.dist);
+    function init(address rewards, StakingRewardsInitParams memory p) internal {
+        StakingRewardsLike(rewards).setRewardsDistribution(p.dist);
     }
 
     /// @dev `StakingRewards` ownership transfer is a 2-step process: nominate + acceptance.
-    function nominateNewOwner(address farm, StakingRewardsNominateNewOwnerParams memory p) internal {
-        StakingRewardsLike(farm).nominateNewOwner(p.newOwner);
+    function nominateNewOwner(address rewards, StakingRewardsNominateNewOwnerParams memory p) internal {
+        StakingRewardsLike(rewards).nominateNewOwner(p.newOwner);
     }
 
     /// @dev `StakingRewards` ownership transfer requires the new owner to explicitly accept it.
-    function acceptOwnership(address farm) internal {
-        StakingRewardsLike(farm).acceptOwnership();
+    function acceptOwnership(address rewards) internal {
+        StakingRewardsLike(rewards).acceptOwnership();
     }
 }
 

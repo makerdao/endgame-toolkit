@@ -42,19 +42,24 @@ contract Phase0_FarmingDeployScript is Script {
         address nst = reader.envOrReadAddress(".nst", "FOUNDRY_NST");
         address vest = reader.envOrReadAddress(".vest", "FOUNDRY_VEST");
         address dist = reader.readAddressOptional(".dist");
-        address farm = reader.readAddressOptional(".farm");
+        address rewards = reader.readAddressOptional(".rewards");
 
         vm.startBroadcast();
 
-        if (farm == address(0)) {
-            farm = StakingRewardsDeploy.deploy(
+        if (rewards == address(0)) {
+            rewards = StakingRewardsDeploy.deploy(
                 StakingRewardsDeployParams({owner: admin, stakingToken: nst, rewardsToken: ngt})
             );
         }
 
         if (dist == address(0)) {
             dist = VestedRewardsDistributionDeploy.deploy(
-                VestedRewardsDistributionDeployParams({deployer: msg.sender, owner: admin, vest: vest, farm: farm})
+                VestedRewardsDistributionDeployParams({
+                    deployer: msg.sender,
+                    owner: admin,
+                    vest: vest,
+                    rewards: rewards
+                })
             );
         }
 
@@ -64,7 +69,7 @@ contract Phase0_FarmingDeployScript is Script {
         ScriptTools.exportContract(NAME, "ngt", ngt);
         ScriptTools.exportContract(NAME, "nst", nst);
         ScriptTools.exportContract(NAME, "dist", dist);
-        ScriptTools.exportContract(NAME, "farm", farm);
+        ScriptTools.exportContract(NAME, "rewards", rewards);
         ScriptTools.exportContract(NAME, "vest", vest);
     }
 }

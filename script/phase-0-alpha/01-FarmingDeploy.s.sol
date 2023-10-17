@@ -25,8 +25,8 @@ import {
     VestedRewardsDistributionDeployParams
 } from "../dependencies/VestedRewardsDistributionDeploy.sol";
 
-contract Phase0Alpha_StakingRewardsDeployScript is Script {
-    string internal constant NAME = "phase-0-alpha/staking-rewards-deploy";
+contract Phase0Alpha_FarmingDeployScript is Script {
+    string internal constant NAME = "phase-0-alpha/farming-deploy";
 
     function run() external {
         Reader reader = new Reader(ScriptTools.loadConfig());

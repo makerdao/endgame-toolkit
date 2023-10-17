@@ -21,8 +21,8 @@ import {ScriptTools} from "dss-test/ScriptTools.sol";
 import {Reader} from "../helpers/Reader.sol";
 import {FarmingInit, FarmingInitParams} from "../dependencies/phase-0-alpha/FarmingInit.sol";
 
-contract Phase0Alpha_StakingRewardsInitScript is Script {
-    string internal constant NAME = "phase-0-alpha/staking-rewards-init";
+contract Phase0Alpha_FarmingInitScript is Script {
+    string internal constant NAME = "phase-0-alpha/farming-init";
 
     function run() external {
         Reader deps = new Reader(ScriptTools.loadDependencies());

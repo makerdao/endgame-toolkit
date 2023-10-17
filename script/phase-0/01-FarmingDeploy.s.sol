@@ -29,8 +29,8 @@ interface ChangelogLike {
     function getAddress(bytes32 _key) external view returns (address addr);
 }
 
-contract Phase0_StakingRewardsDeployScript is Script {
-    string internal constant NAME = "phase-0/staking-rewards-deploy";
+contract Phase0_FarmingDeployScript is Script {
+    string internal constant NAME = "phase-0/farming-deploy";
 
     function run() external {
         Reader reader = new Reader(ScriptTools.loadConfig());
@@ -40,16 +40,11 @@ contract Phase0_StakingRewardsDeployScript is Script {
 
         address ngt = reader.envOrReadAddress(".ngt", "FOUNDRY_NGT");
         address nst = reader.envOrReadAddress(".nst", "FOUNDRY_NST");
+        address vest = reader.envOrReadAddress(".vest", "FOUNDRY_VEST");
         address dist = reader.readAddressOptional(".dist");
         address farm = reader.readAddressOptional(".farm");
-        address vest = reader.readAddressOptional(".vest");
 
         vm.startBroadcast();
-
-        if (vest == address(0)) {
-            vest = deployCode("DssVest.sol:DssVestMintable", abi.encode(ngt));
-            ScriptTools.switchOwner(vest, msg.sender, admin);
-        }
 
         if (farm == address(0)) {
             farm = StakingRewardsDeploy.deploy(

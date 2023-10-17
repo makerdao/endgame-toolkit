@@ -16,54 +16,9 @@
 pragma solidity ^0.8.0;
 
 import {Script} from "forge-std/Script.sol";
-
 import {Reader} from "../helpers/Reader.sol";
 
-interface WardsLike {
-    function wards(address who) external view returns (uint256);
-}
-
-interface VestedRewardsDistributionLike {
-    function dssVest() external view returns (address);
-
-    function vestId() external view returns (uint256);
-
-    function stakingRewards() external view returns (address);
-
-    function gem() external view returns (address);
-}
-
-interface StakingRewardsLike {
-    function owner() external view returns (address);
-
-    function stakingToken() external view returns (address);
-
-    function rewardsToken() external view returns (address);
-
-    function rewardsDistribution() external view returns (address);
-}
-
-interface DssVestWithGemLike {
-    function gem() external view returns (address);
-
-    function tot(uint256 vestId) external view returns (uint256);
-
-    function bgn(uint256 vestId) external view returns (uint256);
-
-    function clf(uint256 vestId) external view returns (uint256);
-
-    function fin(uint256 vestId) external view returns (uint256);
-
-    function mgr(uint256 vestId) external view returns (address);
-
-    function res(uint256 vestId) external view returns (uint256);
-
-    function usr(uint256 vestId) external view returns (address);
-
-    function valid(uint256 _id) external view returns (bool);
-}
-
-contract Phase0Alpha_CheckStakingRewardsDeploymentScript is Script {
+contract Phase0Alpha_FarmingCheckScript is Script {
     function run() external returns (bool) {
         Reader deps = new Reader("");
         deps.loadDependenciesOrConfig();
@@ -108,4 +63,48 @@ contract Phase0Alpha_CheckStakingRewardsDeploymentScript is Script {
 
         return true;
     }
+}
+
+interface WardsLike {
+    function wards(address who) external view returns (uint256);
+}
+
+interface VestedRewardsDistributionLike {
+    function dssVest() external view returns (address);
+
+    function vestId() external view returns (uint256);
+
+    function stakingRewards() external view returns (address);
+
+    function gem() external view returns (address);
+}
+
+interface StakingRewardsLike {
+    function owner() external view returns (address);
+
+    function stakingToken() external view returns (address);
+
+    function rewardsToken() external view returns (address);
+
+    function rewardsDistribution() external view returns (address);
+}
+
+interface DssVestWithGemLike {
+    function gem() external view returns (address);
+
+    function tot(uint256 vestId) external view returns (uint256);
+
+    function bgn(uint256 vestId) external view returns (uint256);
+
+    function clf(uint256 vestId) external view returns (uint256);
+
+    function fin(uint256 vestId) external view returns (uint256);
+
+    function mgr(uint256 vestId) external view returns (address);
+
+    function res(uint256 vestId) external view returns (uint256);
+
+    function usr(uint256 vestId) external view returns (address);
+
+    function valid(uint256 _id) external view returns (bool);
 }

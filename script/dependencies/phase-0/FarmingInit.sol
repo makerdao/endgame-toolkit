@@ -49,6 +49,7 @@ library FarmingInit {
             "FarmingInit/dist-staking-rewards-mismatch"
         );
 
+        // `vest` is expected to be an instance of `DssVestMintable`.
         // Check if minting rights on `ngt` were granted to `vest`.
         require(WardsLike(p.ngt).wards(p.vest) == 1, "FarmingInit/missing-ngt-rely-vest");
 

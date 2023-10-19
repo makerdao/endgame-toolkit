@@ -79,7 +79,7 @@ contract Reader {
         }
     }
 
-    function envOrReadAddress(string memory key, string memory envKey) external returns (address) {
+    function envOrReadAddress(string memory envKey, string memory key) external returns (address) {
         try vm.envAddress(envKey) returns (address addr) {
             return addr;
         } catch {
@@ -87,7 +87,7 @@ contract Reader {
         }
     }
 
-    function envOrReadUint(string memory key, string memory envKey) external returns (uint256) {
+    function envOrReadUint(string memory envKey, string memory key) external returns (uint256) {
         try vm.envUint(envKey) returns (uint256 n) {
             return n;
         } catch {

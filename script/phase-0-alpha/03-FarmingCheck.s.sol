@@ -23,9 +23,9 @@ contract Phase0Alpha_FarmingCheckScript is Script {
         Reader deps = new Reader("");
         deps.loadDependenciesOrConfig();
 
-        address admin = deps.envOrReadAddress(".admin", "FOUNDRY_ADMIN");
-        address ngt = deps.envOrReadAddress(".ngt", "FOUNDRY_NGT");
-        address nst = deps.envOrReadAddress(".nst", "FOUNDRY_NST");
+        address admin = deps.envOrReadAddress("FOUNDRY_ADMIN", ".admin");
+        address ngt = deps.envOrReadAddress("FOUNDRY_NGT", ".ngt");
+        address nst = deps.envOrReadAddress("FOUNDRY_NST", ".nst");
         address dist = deps.readAddress(".dist");
         address rewards = deps.readAddress(".rewards");
         address vest = deps.readAddress(".vest");

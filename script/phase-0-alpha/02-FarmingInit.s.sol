@@ -27,11 +27,11 @@ contract Phase0Alpha_FarmingInitScript is Script {
     function run() external {
         Reader deps = new Reader(ScriptTools.loadDependencies());
 
-        address ngt = deps.envOrReadAddress(".ngt", "FOUNDRY_NGT");
-        address nst = deps.envOrReadAddress(".nst", "FOUNDRY_NST");
-        address dist = deps.envOrReadAddress(".dist", "FOUNDRY_DIST");
-        address rewards = deps.envOrReadAddress(".rewards", "FOUNDRY_FARM");
-        address vest = deps.envOrReadAddress(".vest", "FOUNDRY_VEST");
+        address ngt = deps.envOrReadAddress("FOUNDRY_NGT", ".ngt");
+        address nst = deps.envOrReadAddress("FOUNDRY_NST", ".nst");
+        address dist = deps.envOrReadAddress("FOUNDRY_DIST", ".dist");
+        address rewards = deps.envOrReadAddress("FOUNDRY_FARM", ".rewards");
+        address vest = deps.envOrReadAddress("FOUNDRY_VEST", ".vest");
 
         Reader config = new Reader(ScriptTools.loadConfig());
 

@@ -34,13 +34,13 @@ contract Phase0_FarmingDeployScript is Script {
 
     function run() external {
         Reader reader = new Reader(ScriptTools.loadConfig());
-        ChangelogLike changelog = ChangelogLike(reader.envOrReadAddress(".changelog", "FOUNDRY_CHANGELOG"));
+        ChangelogLike changelog = ChangelogLike(reader.envOrReadAddress("FOUNDRY_CHANGELOG", ".changelog"));
 
         address admin = changelog.getAddress("MCD_PAUSE_PROXY");
 
-        address ngt = reader.envOrReadAddress(".ngt", "FOUNDRY_NGT");
-        address nst = reader.envOrReadAddress(".nst", "FOUNDRY_NST");
-        address vest = reader.envOrReadAddress(".vest", "FOUNDRY_VEST");
+        address ngt = reader.envOrReadAddress("FOUNDRY_NGT", ".ngt");
+        address nst = reader.envOrReadAddress("FOUNDRY_NST", ".nst");
+        address vest = reader.envOrReadAddress("FOUNDRY_VEST", ".vest");
         address dist = reader.readAddressOptional(".dist");
         address rewards = reader.readAddressOptional(".rewards");
 

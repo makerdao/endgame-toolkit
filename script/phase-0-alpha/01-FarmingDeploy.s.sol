@@ -34,16 +34,11 @@ contract Phase0Alpha_FarmingDeployScript is Script {
         address admin = reader.envOrReadAddress(".admin", "FOUNDRY_ADMIN");
         address ngt = reader.envOrReadAddress(".ngt", "FOUNDRY_NGT");
         address nst = reader.envOrReadAddress(".nst", "FOUNDRY_NST");
+        address vest = reader.envOrReadAddress(".vest", "FOUNDRY_VEST");
         address dist = reader.readAddressOptional(".dist");
         address rewards = reader.readAddressOptional(".rewards");
-        address vest = reader.readAddressOptional(".vest");
 
         vm.startBroadcast();
-
-        if (vest == address(0)) {
-            vest = deployCode("DssVest.sol:DssVestMintable", abi.encode(ngt));
-            ScriptTools.switchOwner(vest, msg.sender, admin);
-        }
 
         if (rewards == address(0)) {
             rewards = StakingRewardsDeploy.deploy(

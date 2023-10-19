@@ -17,7 +17,6 @@ pragma solidity ^0.8.0;
 
 import {StakingRewardsInit, StakingRewardsInitParams} from "../StakingRewardsInit.sol";
 import {VestedRewardsDistributionInit, VestedRewardsDistributionInitParams} from "../VestedRewardsDistributionInit.sol";
-import {VestInit, VestInitParams, VestCreateParams} from "../VestInit.sol";
 
 struct FarmingInitParams {
     address nst;
@@ -25,19 +24,20 @@ struct FarmingInitParams {
     address rewards;
     address dist;
     address vest;
-    uint256 vestCap;
-    uint256 vestTot;
-    uint256 vestBgn;
-    uint256 vestTau;
-}
-
-struct FarmingInitResult {
     uint256 vestId;
 }
 
 library FarmingInit {
-    function init(FarmingInitParams memory p) internal returns (FarmingInitResult memory r) {
+    function init(FarmingInitParams memory p) internal {
         require(DssVestWithGemLike(p.vest).gem() == p.ngt, "FarmingInit/vest-gem-mismatch");
+        require(DssVestWithGemLike(p.vest).valid(p.vestId), "FarmingInit/vest-invalid-id");
+        require(DssVestWithGemLike(p.vest).usr(p.vestId) == p.dist, "FarmingInit/vest-invalid-usr");
+        require(DssVestWithGemLike(p.vest).res(p.vestId) == 1, "FarmingInit/vest-not-restricted");
+        require(DssVestWithGemLike(p.vest).mgr(p.vestId) == address(0), "FarmingInit/vest-invalid-mgr");
+        require(
+            DssVestWithGemLike(p.vest).bgn(p.vestId) == DssVestWithGemLike(p.vest).clf(p.vestId),
+            "FarmingInit/vest-bgn-clf-mismatch"
+        );
 
         require(StakingRewardsLike(p.rewards).rewardsToken() == p.ngt, "FarmingInit/rewards-rewards-token-mismatch");
         require(StakingRewardsLike(p.rewards).stakingToken() == p.nst, "FarmingInit/rewards-staking-token-mismatch");
@@ -50,34 +50,34 @@ library FarmingInit {
             "FarmingInit/dist-staking-rewards-mismatch"
         );
 
-        // Grant minting rights on `ngt` to `vest`.
-        RelyLike(p.ngt).rely(p.vest);
-
-        // Define global max vesting ratio on `vest`.
-        VestInit.init(p.vest, VestInitParams({cap: p.vestCap}));
+        require(WardsLike(p.ngt).wards(p.vest) == 1, "FarmingInit/missing-ngt-rely-vest");
 
         // Set `dist` with  `rewardsDistribution` role in `rewards`.
         StakingRewardsInit.init(p.rewards, StakingRewardsInitParams({dist: p.dist}));
 
-        // Create the proper vesting stream for rewards distribution.
-        uint256 vestId = VestInit.create(
-            p.vest,
-            VestCreateParams({usr: p.dist, tot: p.vestTot, bgn: p.vestBgn, tau: p.vestTau, eta: 0})
-        );
-
         // Set the `vestId` in `dist`
-        VestedRewardsDistributionInit.init(p.dist, VestedRewardsDistributionInitParams({vestId: vestId}));
-
-        r.vestId = vestId;
+        VestedRewardsDistributionInit.init(p.dist, VestedRewardsDistributionInitParams({vestId: p.vestId}));
     }
 }
 
-interface RelyLike {
-    function rely(address who) external;
+interface WardsLike {
+    function wards(address usr) external view returns (uint256);
 }
 
 interface DssVestWithGemLike {
     function gem() external view returns (address);
+
+    function bgn(uint256 vestId) external view returns (uint256);
+
+    function clf(uint256 vestId) external view returns (uint256);
+
+    function mgr(uint256 vestId) external view returns (address);
+
+    function res(uint256 vestId) external view returns (uint256);
+
+    function usr(uint256 vestId) external view returns (address);
+
+    function valid(uint256 vestId) external view returns (bool);
 }
 
 interface StakingRewardsLike {

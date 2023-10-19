@@ -35,28 +35,13 @@ contract Phase0Alpha_FarmingInitScript is Script {
 
         Reader config = new Reader(ScriptTools.loadConfig());
 
-        uint256 vestCap = config.readUint(".vestCap");
-        uint256 vestTot = config.readUint(".vestTot");
-        uint256 vestBgn = config.readUint(".vestBgn");
-        uint256 vestTau = config.readUint(".vestTau");
+        uint256 vestId = config.readUint(".vestId");
 
         vm.startBroadcast();
 
-        uint256 vestId = FarmingInit
-            .init(
-                FarmingInitParams({
-                    ngt: ngt,
-                    nst: nst,
-                    dist: dist,
-                    rewards: rewards,
-                    vest: vest,
-                    vestCap: vestCap,
-                    vestTot: vestTot,
-                    vestBgn: vestBgn,
-                    vestTau: vestTau
-                })
-            )
-            .vestId;
+        FarmingInit.init(
+            FarmingInitParams({ngt: ngt, nst: nst, dist: dist, rewards: rewards, vest: vest, vestId: vestId})
+        );
 
         vm.stopBroadcast();
 
@@ -65,8 +50,5 @@ contract Phase0Alpha_FarmingInitScript is Script {
         ScriptTools.exportContract(NAME, "rewards", rewards);
         ScriptTools.exportContract(NAME, "vest", vest);
         ScriptTools.exportContract(NAME, "vestId", address(uint160(vestId)));
-        ScriptTools.exportContract(NAME, "vestTot", address(uint160(vestTot)));
-        ScriptTools.exportContract(NAME, "vestBgn", address(uint160(vestBgn)));
-        ScriptTools.exportContract(NAME, "vestTau", address(uint160(vestTau)));
     }
 }

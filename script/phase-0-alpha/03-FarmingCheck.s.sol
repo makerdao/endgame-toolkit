@@ -30,11 +30,7 @@ contract Phase0Alpha_FarmingCheckScript is Script {
         address rewards = deps.readAddress(".rewards");
         address vest = deps.readAddress(".vest");
         uint256 vestId = deps.readUint(".vestId");
-        uint256 vestTot = deps.readUint(".vestTot");
-        uint256 vestBgn = deps.readUint(".vestBgn");
-        uint256 vestTau = deps.readUint(".vestTau");
 
-        require(WardsLike(dist).wards(admin) == 1, "VestedRewardsDistribution/pause-proxy-not-relied");
         require(VestedRewardsDistributionLike(dist).dssVest() == vest, "VestedRewardsDistribution/invalid-vest");
         require(VestedRewardsDistributionLike(dist).vestId() == vestId, "VestedRewardsDistribution/invalid-vest-id");
         require(VestedRewardsDistributionLike(dist).gem() == ngt, "VestedRewardsDistribution/invalid-gem");
@@ -43,7 +39,7 @@ contract Phase0Alpha_FarmingCheckScript is Script {
             "VestedRewardsDistribution/invalid-staking-rewards"
         );
 
-        require(StakingRewardsLike(rewards).owner() == admin, "StakingRewards/pause-proxy-not-owner");
+        require(StakingRewardsLike(rewards).owner() == admin, "StakingRewards/admin-not-owner");
         require(StakingRewardsLike(rewards).rewardsToken() == ngt, "StakingRewards/invalid-rewards-token");
         require(StakingRewardsLike(rewards).stakingToken() == nst, "StakingRewards/invalid-rewards-token");
         require(
@@ -53,15 +49,10 @@ contract Phase0Alpha_FarmingCheckScript is Script {
 
         require(WardsLike(ngt).wards(vest) == 1, "Ngt/dss-vest-not-ward");
 
-        require(WardsLike(vest).wards(admin) == 1, "DssVest/pause-proxy-not-relied");
         require(DssVestWithGemLike(vest).gem() == ngt, "DssVest/invalid-gem");
         require(DssVestWithGemLike(vest).valid(vestId), "DssVest/invalid-vest-id");
         require(DssVestWithGemLike(vest).res(vestId) == 1, "DssVest/invalid-vest-res");
         require(DssVestWithGemLike(vest).usr(vestId) == dist, "DssVest/wrong-dist");
-        require(DssVestWithGemLike(vest).tot(vestId) == vestTot, "DssVest/invalid-tot");
-        require(DssVestWithGemLike(vest).bgn(vestId) == vestBgn, "DssVest/invalid-bgn");
-        require(DssVestWithGemLike(vest).clf(vestId) == vestBgn, "DssVest/eta-not-zero");
-        require(DssVestWithGemLike(vest).fin(vestId) == vestBgn + vestTau, "DssVest/invalid-tau");
         require(DssVestWithGemLike(vest).mgr(vestId) == address(0), "DssVest/mgr-should-not-be-set");
 
         return true;

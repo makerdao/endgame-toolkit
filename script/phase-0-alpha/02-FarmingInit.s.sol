@@ -49,6 +49,6 @@ contract Phase0Alpha_FarmingInitScript is Script {
         ScriptTools.exportContract(NAME, "dist", dist);
         ScriptTools.exportContract(NAME, "rewards", rewards);
         ScriptTools.exportContract(NAME, "vest", vest);
-        ScriptTools.exportContract(NAME, "vestId", address(uint160(vestId)));
+        ScriptTools.exportValue(NAME, "vestId", vestId);
     }
 }

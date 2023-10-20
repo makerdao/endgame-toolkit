@@ -25,10 +25,6 @@ import {
     VestedRewardsDistributionDeployParams
 } from "../dependencies/VestedRewardsDistributionDeploy.sol";
 
-interface ChangelogLike {
-    function getAddress(bytes32 _key) external view returns (address addr);
-}
-
 contract Phase0_FarmingDeployScript is Script {
     string internal constant NAME = "phase-0/farming-deploy";
 
@@ -72,4 +68,8 @@ contract Phase0_FarmingDeployScript is Script {
         ScriptTools.exportContract(NAME, "rewards", rewards);
         ScriptTools.exportContract(NAME, "vest", vest);
     }
+}
+
+interface ChangelogLike {
+    function getAddress(bytes32 _key) external view returns (address addr);
 }

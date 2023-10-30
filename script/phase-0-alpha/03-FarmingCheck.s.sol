@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.16;
 
 import {Script} from "forge-std/Script.sol";
 import {Reader} from "../helpers/Reader.sol";

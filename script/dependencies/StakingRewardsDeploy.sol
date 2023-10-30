@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.16;
 
 import {StakingRewards} from "../../src/synthetix/StakingRewards.sol";
 

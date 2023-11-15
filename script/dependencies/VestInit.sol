@@ -15,8 +15,6 @@
 
 pragma solidity ^0.8.16;
 
-import {ScriptTools} from "dss-test/ScriptTools.sol";
-
 struct VestInitParams {
     uint256 cap;
 }
@@ -30,8 +28,6 @@ struct VestCreateParams {
 }
 
 library VestInit {
-    using ScriptTools for string;
-
     function init(address vest, VestInitParams memory p) internal {
         DssVestLike(vest).file("cap", p.cap);
     }

@@ -1,8 +1,8 @@
 {
-  "admin": "address: usually the MCD_PAUSE_PROXY address",
+  "changelog": "address",
   "ngt": "address",
   "nst": "address",
   "dist": "address",
-  "farm": "address",
+  "rewards": "address",
   "vest": "address"
 }

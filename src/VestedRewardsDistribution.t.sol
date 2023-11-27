@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-pragma solidity 0.8.19;
+pragma solidity ^0.8.16;
 
 import {DssTest, stdStorage, StdStorage} from "dss-test/DssTest.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
@@ -37,7 +37,7 @@ contract VestedRewardsDistributionTest is DssTest {
     struct DistributionParams {
         VestedRewardsDistribution dist;
         DssVestWithGemLike vest;
-        IStakingRewards farm;
+        IStakingRewards rewards;
         IERC20Mintable rewardsToken;
         uint256 vestId;
         VestParams vestParams;
@@ -61,7 +61,7 @@ contract VestedRewardsDistributionTest is DssTest {
             DistributionParams({
                 dist: VestedRewardsDistribution(address(0)),
                 vest: DssVestWithGemLike(address(0)),
-                farm: IStakingRewards(address(0)),
+                rewards: IStakingRewards(address(0)),
                 rewardsToken: IERC20Mintable(address(new SDAO("K Token", "K"))),
                 vestId: 0,
                 vestParams: _makeVestParams()
@@ -73,13 +73,17 @@ contract VestedRewardsDistributionTest is DssTest {
         // 1st distribution
         skip(k.vestParams.tau / 3);
 
-        assertEq(k.rewardsToken.balanceOf(address(k.farm)), 0, "Bad initial balance");
+        assertEq(k.rewardsToken.balanceOf(address(k.rewards)), 0, "Bad initial balance");
 
         vm.expectEmit(false, false, false, true, address(k.dist));
         emit Distribute(k.vestParams.tot / 3);
         k.dist.distribute();
 
-        assertEq(k.rewardsToken.balanceOf(address(k.farm)), k.vestParams.tot / 3, "Bad balance after 1st distribution");
+        assertEq(
+            k.rewardsToken.balanceOf(address(k.rewards)),
+            k.vestParams.tot / 3,
+            "Bad balance after 1st distribution"
+        );
 
         // 2nd distribution
         skip(k.vestParams.tau / 3);
@@ -92,7 +96,7 @@ contract VestedRewardsDistributionTest is DssTest {
         uint256 tolerance = 0.0001e18;
 
         assertApproxEqRel(
-            k.rewardsToken.balanceOf(address(k.farm)),
+            k.rewardsToken.balanceOf(address(k.rewards)),
             (2 * k.vestParams.tot) / 3,
             tolerance,
             "Bad balance after 2nd distribution"
@@ -106,7 +110,7 @@ contract VestedRewardsDistributionTest is DssTest {
         k.dist.distribute();
 
         assertApproxEqRel(
-            k.rewardsToken.balanceOf(address(k.farm)),
+            k.rewardsToken.balanceOf(address(k.rewards)),
             k.vestParams.tot,
             tolerance,
             "Bad balance after 3rd distribution"
@@ -124,7 +128,7 @@ contract VestedRewardsDistributionTest is DssTest {
         for (uint256 i = 0; i < totalDistributions; i++) {
             skip(timeSkip);
             k.dist.distribute();
-            balances[i] = k.rewardsToken.balanceOf(address(k.farm));
+            balances[i] = k.rewardsToken.balanceOf(address(k.rewards));
         }
 
         uint256[] memory deltas = new uint256[](totalDistributions - 1);
@@ -145,7 +149,7 @@ contract VestedRewardsDistributionTest is DssTest {
             );
         }
 
-        assertApproxEqRel(k.rewardsToken.balanceOf(address(k.farm)), k.vestParams.tot, tolerance);
+        assertApproxEqRel(k.rewardsToken.balanceOf(address(k.rewards)), k.vestParams.tot, tolerance);
 
         skip(365 days);
         // Check if the amount undistributed is less than 0.001% of the total
@@ -212,13 +216,13 @@ contract VestedRewardsDistributionTest is DssTest {
         // 1st vest
         skip(k.vestParams.tau);
 
-        assertEq(k.rewardsToken.balanceOf(address(k.farm)), 0, "Bad initial balance");
+        assertEq(k.rewardsToken.balanceOf(address(k.rewards)), 0, "Bad initial balance");
 
         vm.expectEmit(false, false, false, true, address(k.dist));
         emit Distribute(k.vestParams.tot);
         k.dist.distribute();
 
-        assertEq(k.rewardsToken.balanceOf(address(k.farm)), k.vestParams.tot, "Bad balance after 1st distribution");
+        assertEq(k.rewardsToken.balanceOf(address(k.rewards)), k.vestParams.tot, "Bad balance after 1st distribution");
 
         // 2nd vest
 
@@ -241,7 +245,7 @@ contract VestedRewardsDistributionTest is DssTest {
         k.dist.distribute();
 
         assertEq(
-            k.rewardsToken.balanceOf(address(k.farm)),
+            k.rewardsToken.balanceOf(address(k.rewards)),
             k.vestParams.tot + vestParams2.tot,
             "Bad balance after 2nd distribution"
         );
@@ -276,7 +280,7 @@ contract VestedRewardsDistributionTest is DssTest {
         k.dist.distribute();
 
         assertEq(
-            k.rewardsToken.balanceOf(address(k.farm)),
+            k.rewardsToken.balanceOf(address(k.rewards)),
             k.vestParams.tot + vestParams2.tot + vestParams3.tot,
             "Bad balance after 3rd distribution"
         );
@@ -288,12 +292,12 @@ contract VestedRewardsDistributionTest is DssTest {
 
         skip(k.vestParams.tau / 3);
 
-        assertEq(k.rewardsToken.balanceOf(address(k.farm)), 0, "Bad initial balance");
+        assertEq(k.rewardsToken.balanceOf(address(k.rewards)), 0, "Bad initial balance");
 
         uint256 amount = k.dist.distribute();
 
         assertLt(amount, 1_000_000_000 * WAD, "Dangling tokens distributed");
-        assertEq(k.rewardsToken.balanceOf(address(k.farm)), amount, "Bad final balance");
+        assertEq(k.rewardsToken.balanceOf(address(k.rewards)), amount, "Bad final balance");
     }
 
     function testRevertWithReasonWhenDistributeBeforeCliffRegression() public {
@@ -348,15 +352,15 @@ contract VestedRewardsDistributionTest is DssTest {
             result.vest.file("cap", type(uint256).max);
         }
 
-        if (address(result.farm) == address(0)) {
-            result.farm = new StakingRewards(address(this), address(0), address(result.rewardsToken), address(0));
+        if (address(result.rewards) == address(0)) {
+            result.rewards = new StakingRewards(address(this), address(0), address(result.rewardsToken), address(0));
         }
 
         if (address(result.dist) == address(0)) {
-            result.dist = new VestedRewardsDistribution(address(result.vest), address(result.farm));
+            result.dist = new VestedRewardsDistribution(address(result.vest), address(result.rewards));
         }
 
-        result.farm.setRewardsDistribution(address(result.dist));
+        result.rewards.setRewardsDistribution(address(result.dist));
         _distParams.vestParams.usr = address(result.dist);
 
         (result.vestId, result.vestParams) = _setUpVest(result.vest, _distParams.vestParams);

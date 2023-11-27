@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.16;
 
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 import {VestedRewardsDistribution} from "../../src/VestedRewardsDistribution.sol";
@@ -22,12 +22,12 @@ struct VestedRewardsDistributionDeployParams {
     address deployer;
     address owner;
     address vest;
-    address farm;
+    address rewards;
 }
 
 library VestedRewardsDistributionDeploy {
     function deploy(VestedRewardsDistributionDeployParams memory p) internal returns (address dist) {
-        dist = address(new VestedRewardsDistribution(p.vest, p.farm));
+        dist = address(new VestedRewardsDistribution(p.vest, p.rewards));
 
         ScriptTools.switchOwner(dist, p.deployer, p.owner);
     }

@@ -13,51 +13,47 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.16;
 
 import {Script} from "forge-std/Script.sol";
-import {stdJson} from "forge-std/StdJson.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 
-import {Reader} from "./helpers/Reader.sol";
-import {StakingRewardsDeploy, StakingRewardsDeployParams} from "./dependencies/StakingRewardsDeploy.sol";
+import {Reader} from "../helpers/Reader.sol";
+import {StakingRewardsDeploy, StakingRewardsDeployParams} from "../dependencies/StakingRewardsDeploy.sol";
 import {
     VestedRewardsDistributionDeploy,
     VestedRewardsDistributionDeployParams
-} from "./dependencies/VestedRewardsDistributionDeploy.sol";
+} from "../dependencies/VestedRewardsDistributionDeploy.sol";
 
-contract Phase0StakingRewardsDeployScript is Script {
-    using stdJson for string;
-    using ScriptTools for string;
-
-    string internal constant NAME = "Phase0StakingRewardsDeploy";
+contract Phase0Alpha_FarmingDeployScript is Script {
+    string internal constant NAME = "phase-0-alpha/farming-deploy";
 
     function run() external {
         Reader reader = new Reader(ScriptTools.loadConfig());
 
-        address admin = reader.envOrReadAddress(".admin", "FOUNDRY_ADMIN");
-        address ngt = reader.envOrReadAddress(".ngt", "FOUNDRY_NGT");
-        address nst = reader.envOrReadAddress(".nst", "FOUNDRY_NST");
+        address admin = reader.envOrReadAddress("FOUNDRY_ADMIN", ".admin");
+        address ngt = reader.envOrReadAddress("FOUNDRY_NGT", ".ngt");
+        address nst = reader.envOrReadAddress("FOUNDRY_NST", ".nst");
+        address vest = reader.envOrReadAddress("FOUNDRY_VEST", ".vest");
         address dist = reader.readAddressOptional(".dist");
-        address farm = reader.readAddressOptional(".farm");
-        address vest = reader.readAddressOptional(".vest");
+        address rewards = reader.readAddressOptional(".rewards");
 
         vm.startBroadcast();
 
-        if (vest == address(0)) {
-            vest = deployCode("DssVest.sol:DssVestMintable", abi.encode(ngt));
-            ScriptTools.switchOwner(vest, msg.sender, admin);
-        }
-
-        if (farm == address(0)) {
-            farm = StakingRewardsDeploy.deploy(
+        if (rewards == address(0)) {
+            rewards = StakingRewardsDeploy.deploy(
                 StakingRewardsDeployParams({owner: admin, stakingToken: nst, rewardsToken: ngt})
             );
         }
 
         if (dist == address(0)) {
             dist = VestedRewardsDistributionDeploy.deploy(
-                VestedRewardsDistributionDeployParams({deployer: msg.sender, owner: admin, vest: vest, farm: farm})
+                VestedRewardsDistributionDeployParams({
+                    deployer: msg.sender,
+                    owner: admin,
+                    vest: vest,
+                    rewards: rewards
+                })
             );
         }
 
@@ -67,7 +63,7 @@ contract Phase0StakingRewardsDeployScript is Script {
         ScriptTools.exportContract(NAME, "ngt", ngt);
         ScriptTools.exportContract(NAME, "nst", nst);
         ScriptTools.exportContract(NAME, "dist", dist);
-        ScriptTools.exportContract(NAME, "farm", farm);
+        ScriptTools.exportContract(NAME, "rewards", rewards);
         ScriptTools.exportContract(NAME, "vest", vest);
     }
 }

@@ -13,24 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.8.0;
-
-import {ScriptTools} from "dss-test/ScriptTools.sol";
-
-interface DssVestLike {
-    function file(bytes32 _what, uint256 _data) external;
-
-    function create(
-        address _usr,
-        uint256 _tot,
-        uint256 _bgn,
-        uint256 _tau,
-        uint256 _eta,
-        address _mgr
-    ) external returns (uint256 id);
-
-    function restrict(uint256 _id) external;
-}
+pragma solidity ^0.8.16;
 
 struct VestInitParams {
     uint256 cap;
@@ -45,8 +28,6 @@ struct VestCreateParams {
 }
 
 library VestInit {
-    using ScriptTools for string;
-
     function init(address vest, VestInitParams memory p) internal {
         DssVestLike(vest).file("cap", p.cap);
     }
@@ -63,4 +44,19 @@ library VestInit {
 
         DssVestLike(vest).restrict(vestId);
     }
+}
+
+interface DssVestLike {
+    function file(bytes32 _what, uint256 _data) external;
+
+    function create(
+        address _usr,
+        uint256 _tot,
+        uint256 _bgn,
+        uint256 _tau,
+        uint256 _eta,
+        address _mgr
+    ) external returns (uint256 id);
+
+    function restrict(uint256 _id) external;
 }

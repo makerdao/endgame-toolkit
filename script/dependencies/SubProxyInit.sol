@@ -13,14 +13,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.16;
 
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 import {DssInstance, MCD} from "dss-test/MCD.sol";
-
-interface SubProxyLike {
-    function rely(address who) external;
-}
 
 struct SubProxyInitParams {
     address chainlog;
@@ -41,4 +37,8 @@ library SubProxyInit {
         // Add `SUBPROXY_{NAME}` to the chainlog.
         mcd.chainlog.setAddress(string.concat("SUBPROXY_", name).stringToBytes32(), subProxy);
     }
+}
+
+interface SubProxyLike {
+    function rely(address who) external;
 }

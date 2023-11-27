@@ -1,6 +1,0 @@
-{
-  "vestCap": "uint256: global max issuance rate per token",
-  "vestTot": "uint256: total amount of the vesting stream",
-  "vestBgn": "uint256: timestamp of the beginning of the vesting stream",
-  "vestTau": "uint256: duration of the vesting stream in seconds"
-}

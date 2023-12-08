@@ -256,7 +256,7 @@ contract StakingRewardsTest is Test {
         assert(rewardGem.balanceOf(address(this)) > rewardBalance);
     }
 
-    function testsetRewardsDurationEvent() public {
+    function testSetRewardsDurationEvent() public {
         vm.expectEmit(true, true, true, true);
         emit RewardsDurationUpdated(70 days);
         rewards.setRewardsDuration(70 days);
@@ -270,16 +270,40 @@ contract StakingRewardsTest is Test {
         assertEq(rewards.rewardsDuration(), 70 days);
     }
 
-    function testRevertSetRewardsDurationOnActiveDistribution() public {
+    function testSetRewardsDurationOnActiveDistribution() public {
         setupStakingToken(100 * WAD);
         rewards.stake(100 * WAD);
-
         setupReward(100 * WAD);
+        assertEq(rewardGem.balanceOf(address(this)), 0);
+        assertEq(rewardGem.balanceOf(address(rewards)), 100 * WAD);
+        assertEq(gem.balanceOf(address(this)), 0);
+        assertEq(gem.balanceOf(address(rewards)), 100 * WAD);
+        assertEq(rewards.rewardPerTokenStored(), 0);
+        assertEq(rewards.lastUpdateTime(), block.timestamp);
+        assertEq(rewards.rewardRate(), 100 * WAD / 7 days);
+        assertEq(rewards.periodFinish(), block.timestamp + 7 days);
+        assertEq(rewards.rewardsDuration(), 7 days);
 
         skip(1 days);
 
-        vm.expectRevert("Previous rewards period must be complete before changing the duration for the new period");
         rewards.setRewardsDuration(70 days);
+
+        assertEq(rewards.rewardPerTokenStored(), 1 days * (100 * WAD / 7 days) * WAD / (100 * WAD));
+        assertEq(rewards.lastUpdateTime(), block.timestamp);
+        assertEq(rewards.rewardRate(), 6 days * (100 * WAD / 7 days) / 70 days);
+        assertEq(rewards.periodFinish(), block.timestamp + 70 days);
+        assertEq(rewards.rewardsDuration(), 70 days);
+
+        skip(70 days);
+
+        rewards.exit();
+
+        uint256 rewardPaid = 1 days * (100 * WAD / 7 days) + 70 days * (6 days * (100 * WAD / 7 days) / 70 days);
+        uint256 rewardDust = 100 * WAD - rewardPaid;
+        assertEq(rewardGem.balanceOf(address(this)), rewardPaid);
+        assertEq(rewardGem.balanceOf(address(rewards)), rewardDust);
+        assertEq(gem.balanceOf(address(this)), 100 * WAD);
+        assertEq(gem.balanceOf(address(rewards)), 0);
     }
 
     function testSetRewardsDurationAfterDistributionPeriod() public {
@@ -323,7 +347,7 @@ contract StakingRewardsTest is Test {
         rewards.withdraw(0);
     }
 
-    function testWithdrwal() public {
+    function testWithdrawal() public {
         setupStakingToken(100 * WAD);
         rewards.stake(100 * WAD);
 

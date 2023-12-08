@@ -162,11 +162,14 @@ contract StakingRewards is IStakingRewards, Pausable, ReentrancyGuard {
         emit Recovered(tokenAddress, tokenAmount);
     }
 
-    function setRewardsDuration(uint256 _rewardsDuration) external onlyOwner {
-        require(
-            block.timestamp > periodFinish,
-            "Previous rewards period must be complete before changing the duration for the new period"
-        );
+    function setRewardsDuration(uint256 _rewardsDuration) external onlyOwner updateReward(address(0)) {
+        uint256 periodFinish_ = periodFinish;
+        if (block.timestamp < periodFinish_) {
+            uint256 leftover = (periodFinish_ - block.timestamp) * rewardRate;
+            rewardRate = leftover / _rewardsDuration;
+            periodFinish = block.timestamp + _rewardsDuration;
+        }
+
         rewardsDuration = _rewardsDuration;
         emit RewardsDurationUpdated(rewardsDuration);
     }

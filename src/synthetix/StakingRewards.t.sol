@@ -271,16 +271,18 @@ contract StakingRewardsTest is Test {
     }
 
     function testSetRewardsDurationOnActiveDistribution() public {
+        uint256 totalStake = 100 * WAD;
+        uint256 totalReward = 123 * WAD;
         setupStakingToken(100 * WAD);
         rewards.stake(100 * WAD);
-        setupReward(100 * WAD);
+        setupReward(totalReward);
         assertEq(rewardGem.balanceOf(address(this)), 0);
-        assertEq(rewardGem.balanceOf(address(rewards)), 100 * WAD);
+        assertEq(rewardGem.balanceOf(address(rewards)), totalReward);
         assertEq(gem.balanceOf(address(this)), 0);
-        assertEq(gem.balanceOf(address(rewards)), 100 * WAD);
+        assertEq(gem.balanceOf(address(rewards)), totalStake);
         assertEq(rewards.rewardPerTokenStored(), 0);
         assertEq(rewards.lastUpdateTime(), block.timestamp);
-        assertEq(rewards.rewardRate(), 100 * WAD / 7 days);
+        assertEq(rewards.rewardRate(), totalReward / 7 days);
         assertEq(rewards.periodFinish(), block.timestamp + 7 days);
         assertEq(rewards.rewardsDuration(), 7 days);
 
@@ -288,9 +290,9 @@ contract StakingRewardsTest is Test {
 
         rewards.setRewardsDuration(70 days);
 
-        assertEq(rewards.rewardPerTokenStored(), 1 days * (100 * WAD / 7 days) * WAD / (100 * WAD));
+        assertEq(rewards.rewardPerTokenStored(), 1 days * (totalReward / 7 days) * WAD / totalStake);
         assertEq(rewards.lastUpdateTime(), block.timestamp);
-        assertEq(rewards.rewardRate(), 6 days * (100 * WAD / 7 days) / 70 days);
+        assertEq(rewards.rewardRate(), 6 days * (totalReward / 7 days) / 70 days);
         assertEq(rewards.periodFinish(), block.timestamp + 70 days);
         assertEq(rewards.rewardsDuration(), 70 days);
 
@@ -298,11 +300,11 @@ contract StakingRewardsTest is Test {
 
         rewards.exit();
 
-        uint256 rewardPaid = 1 days * (100 * WAD / 7 days) + 70 days * (6 days * (100 * WAD / 7 days) / 70 days);
-        uint256 rewardDust = 100 * WAD - rewardPaid;
+        uint256 rewardLeft = totalReward % 7 days + 6 days * (totalReward / 7 days) % 70 days; // dust lost due to rewardRate being rounded down
+        uint256 rewardPaid = totalReward - rewardLeft;
         assertEq(rewardGem.balanceOf(address(this)), rewardPaid);
-        assertEq(rewardGem.balanceOf(address(rewards)), rewardDust);
-        assertEq(gem.balanceOf(address(this)), 100 * WAD);
+        assertEq(rewardGem.balanceOf(address(rewards)), rewardLeft);
+        assertEq(gem.balanceOf(address(this)), totalStake);
         assertEq(gem.balanceOf(address(rewards)), 0);
     }
 

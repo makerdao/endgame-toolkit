@@ -67,6 +67,7 @@ through a [`StakingRewards`](#stakingrewards) contract.
   - The original `stake(uint256 amount)` function still works the same as before.
   - There is a new overload `stake(uint256 amount, uint16 referral)` which performs the same operation and emits the
     new `Referral` event.
+- Update `setRewardsDuration()` to support changing the reward duration during an active distribution
 
 ## Contributing
 

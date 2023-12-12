@@ -2,7 +2,7 @@
  * NOTICE: This contract has been adapted from the original Synthetix source code:
  *  - Upgrade Solidity version from 0.5.x to 0.8.x.
  *  - Add referral code functionality for `stake()`.
- *  - Update `setRewardDuration()` to support changing the reward duration during an active distribution
+ *  - Update `setRewardDuration()` to support changing the reward duration during an active distribution.
  *
  * Original: https://github.com/Synthetixio/synthetix/blob/5e9096ac4aea6c4249828f1e8b95e3fb9be231f8/contracts/StakingRewards.sol
  *     Diff: https://www.diffchecker.com/9JdI2pIN/

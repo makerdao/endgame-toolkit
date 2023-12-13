@@ -285,7 +285,7 @@ contract StakingRewardsTest is Test {
         assertEq(rewards.rewardsDuration(), 70 days);
     }
 
-    function testChangeRewardDurationOnActiveDistribution(uint256 newDuration) private {
+    function checkChangeRewardDurationOnActiveDistribution(uint256 newDuration) private {
         uint256 totalStake = 100 * WAD;
         uint256 totalReward = 123 * WAD;
         init7DayFarm(totalStake, totalReward);
@@ -313,11 +313,11 @@ contract StakingRewardsTest is Test {
     }
 
     function testIncreaseRewardsDurationOnActiveDistribution() public {
-        testChangeRewardDurationOnActiveDistribution(70 days);
+        checkChangeRewardDurationOnActiveDistribution(70 days);
     }
 
     function testDecreaseRewardsDurationOnActiveDistribution() public {
-        testChangeRewardDurationOnActiveDistribution(5 days);
+        checkChangeRewardDurationOnActiveDistribution(5 days);
     }
 
     function testSetSameRewardsDurationOnActiveDistribution() public {

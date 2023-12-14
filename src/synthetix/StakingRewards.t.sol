@@ -326,7 +326,7 @@ contract StakingRewardsTest is Test {
     function testSetSameRewardsDurationOnActiveDistribution() public {
         uint256 totalStake = 100 * WAD;
         uint256 totalReward = 123 * WAD;
-        uint256 initialDuration = 5 days;
+        uint256 initialDuration = 7 days;
         uint256 initialRun = 1 days;
         initFarm(totalStake, totalReward, initialDuration);
         skip(initialRun);

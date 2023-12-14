@@ -67,7 +67,8 @@ through a [`StakingRewards`](#stakingrewards) contract.
   - There is a new overload `stake(uint256 amount, uint16 referral)` which performs the same operation and emits the
     new `Referral` event.
 - Update `setRewardsDuration()` to support changing the reward duration during an active distribution.
-  - This allows the duration to be changed even when new reward is added immediately after the end of a distribution period, which would be the case when `rewardDistribution` is a smart contract distributing new reward every period.
+  - This allows the duration to be changed even when new reward is added immediately after the end of a distribution
+    period, which would be the case when `rewardDistribution` is a smart contract distributing new reward every period.
 
 ## Contributing
 

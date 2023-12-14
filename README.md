@@ -56,17 +56,19 @@ through a [`StakingRewards`](#stakingrewards) contract.
 
 #### `StakingRewards`
 
-`StakingRewards` is a port of [Synthetix `StakingRewards`][staking-rewards]. The changes made include:
+`StakingRewards` is a port of [Synthetix `StakingRewards`][staking-rewards]. Full diff can be found [here](https://www.diffchecker.com/9JdI2pIN/). The changes made include:
 
-- Upgrade to the Solidity version from 0.5.x to 0.8.x
+- Upgrade to the Solidity version from 0.5.x to 0.8.x.
   - It was required some reorganization of the internal structure because of changes in the inheritance resolution
     mechanism.
-  - Full diff can be found [here](https://www.diffchecker.com/rgBMl45S/).
-- Added referral code functionality for `stake()`
+- Add referral code functionality for `stake()`.
   - Referral codes are meant to be used by UIs to identify themselves as the preferred solution by users.
   - The original `stake(uint256 amount)` function still works the same as before.
   - There is a new overload `stake(uint256 amount, uint16 referral)` which performs the same operation and emits the
     new `Referral` event.
+- Update `setRewardsDuration()` to support changing the reward duration during an active distribution.
+  - This allows the duration to be changed even when new reward is added immediately after the end of a distribution
+    period, which would be the case when `rewardDistribution` is a smart contract distributing new reward every period.
 
 ## Contributing
 

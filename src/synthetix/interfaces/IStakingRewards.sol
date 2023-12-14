@@ -55,4 +55,8 @@ interface IStakingRewards {
     function notifyRewardAmount(uint256 reward) external;
 
     function setRewardsDistribution(address _rewardsDistribution) external;
+
+    function setRewardsDuration(uint256 _rewardsDuration) external;
+
+    function recoverERC20(address tokenAddress, uint256 tokenAmount) external;
 }

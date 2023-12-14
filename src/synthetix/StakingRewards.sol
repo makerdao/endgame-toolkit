@@ -2,9 +2,10 @@
  * NOTICE: This contract has been adapted from the original Synthetix source code:
  *  - Upgrade Solidity version from 0.5.x to 0.8.x.
  *  - Add referral code functionality for `stake()`.
+ *  - Update `setRewardDuration()` to support changing the reward duration during an active distribution.
  *
  * Original: https://github.com/Synthetixio/synthetix/blob/5e9096ac4aea6c4249828f1e8b95e3fb9be231f8/contracts/StakingRewards.sol
- *     Diff: https://www.diffchecker.com/rgBMl45S/
+ *     Diff: https://www.diffchecker.com/9JdI2pIN/
  */
 
 // SPDX-FileCopyrightText: © 2019-2021 Synthetix
@@ -162,11 +163,14 @@ contract StakingRewards is IStakingRewards, Pausable, ReentrancyGuard {
         emit Recovered(tokenAddress, tokenAmount);
     }
 
-    function setRewardsDuration(uint256 _rewardsDuration) external onlyOwner {
-        require(
-            block.timestamp > periodFinish,
-            "Previous rewards period must be complete before changing the duration for the new period"
-        );
+    function setRewardsDuration(uint256 _rewardsDuration) external onlyOwner updateReward(address(0)) {
+        uint256 periodFinish_ = periodFinish;
+        if (block.timestamp < periodFinish_) {
+            uint256 leftover = (periodFinish_ - block.timestamp) * rewardRate;
+            rewardRate = leftover / _rewardsDuration;
+            periodFinish = block.timestamp + _rewardsDuration;
+        }
+
         rewardsDuration = _rewardsDuration;
         emit RewardsDurationUpdated(rewardsDuration);
     }

@@ -38,6 +38,22 @@ contract StakingRewardsTest is Test {
         gem.approve(address(rewards), amt);
     }
 
+    function initFarm(uint256 stake, uint256 reward, uint256 duration) internal {
+        rewards.setRewardsDuration(duration);
+        setupReward(reward);
+        setupStakingToken(stake);
+        rewards.stake(stake);
+        assertEq(rewardGem.balanceOf(address(this)), 0);
+        assertEq(rewardGem.balanceOf(address(rewards)), reward);
+        assertEq(gem.balanceOf(address(this)), 0);
+        assertEq(gem.balanceOf(address(rewards)), stake);
+        assertEq(rewards.rewardPerTokenStored(), 0);
+        assertEq(rewards.lastUpdateTime(), block.timestamp);
+        assertEq(rewards.rewardRate(), reward / duration);
+        assertEq(rewards.periodFinish(), block.timestamp + duration);
+        assertEq(rewards.rewardsDuration(), duration);
+    }
+
     function setUp() public {
         rewardGem = new TestToken("SubDaoT", 18);
         gem = new TestToken("MKR", 18);
@@ -256,7 +272,7 @@ contract StakingRewardsTest is Test {
         assert(rewardGem.balanceOf(address(this)) > rewardBalance);
     }
 
-    function testsetRewardsDurationEvent() public {
+    function testSetRewardsDurationEvent() public {
         vm.expectEmit(true, true, true, true);
         emit RewardsDurationUpdated(70 days);
         rewards.setRewardsDuration(70 days);
@@ -270,16 +286,120 @@ contract StakingRewardsTest is Test {
         assertEq(rewards.rewardsDuration(), 70 days);
     }
 
-    function testRevertSetRewardsDurationOnActiveDistribution() public {
-        setupStakingToken(100 * WAD);
-        rewards.stake(100 * WAD);
+    function checkChangeRewardDurationOnActiveDistribution(uint256 newDuration) private {
+        uint256 totalStake = 100 * WAD;
+        uint256 totalReward = 123 * WAD;
+        uint256 initialDuration = 7 days;
+        uint256 initialRun = 1 days;
+        initFarm(totalStake, totalReward, initialDuration);
 
-        setupReward(100 * WAD);
+        skip(initialRun);
 
-        skip(1 days);
+        rewards.setRewardsDuration(newDuration);
 
-        vm.expectRevert("Previous rewards period must be complete before changing the duration for the new period");
-        rewards.setRewardsDuration(70 days);
+        assertEq(rewards.rewardPerTokenStored(), initialRun * (totalReward / initialDuration) * WAD / totalStake);
+        assertEq(rewards.lastUpdateTime(), block.timestamp);
+        assertEq(rewards.rewardRate(), (initialDuration - initialRun) * (totalReward / initialDuration) / newDuration);
+        assertEq(rewards.periodFinish(), block.timestamp + newDuration);
+        assertEq(rewards.rewardsDuration(), newDuration);
+
+        skip(newDuration);
+
+        rewards.exit();
+
+        uint256 rewardLeft = totalReward % initialDuration + (initialDuration - initialRun) * (totalReward / initialDuration) % newDuration; // dust lost due to rewardRate being rounded down
+        uint256 rewardPaid = totalReward - rewardLeft;
+        assertEq(rewardGem.balanceOf(address(this)), rewardPaid);
+        assertEq(rewardGem.balanceOf(address(rewards)), rewardLeft);
+        assertEq(gem.balanceOf(address(this)), totalStake);
+        assertEq(gem.balanceOf(address(rewards)), 0);
+    }
+
+    function testIncreaseRewardsDurationOnActiveDistribution() public {
+        checkChangeRewardDurationOnActiveDistribution(70 days);
+    }
+
+    function testDecreaseRewardsDurationOnActiveDistribution() public {
+        checkChangeRewardDurationOnActiveDistribution(5 days);
+    }
+
+    function testSetSameRewardsDurationOnActiveDistribution() public {
+        uint256 totalStake = 100 * WAD;
+        uint256 totalReward = 123 * WAD;
+        uint256 initialDuration = 7 days;
+        uint256 initialRun = 1 days;
+        initFarm(totalStake, totalReward, initialDuration);
+        skip(initialRun);
+
+        uint256 prevRewardRate = rewards.rewardRate();
+        uint256 prevPeriodFinish = rewards.periodFinish();
+
+        rewards.setRewardsDuration(initialDuration - initialRun); // same duration as time left
+
+        assertEq(rewards.rewardPerTokenStored(), initialRun * (totalReward / initialDuration) * WAD / totalStake);
+        assertEq(rewards.lastUpdateTime(), block.timestamp);
+        assertEq(rewards.rewardRate(), prevRewardRate);
+        assertEq(rewards.periodFinish(), prevPeriodFinish);
+        assertEq(rewards.rewardsDuration(), initialDuration - initialRun);
+    }
+
+    function testSetRewardsDurationAndNotifyRewardAmountCallOrderOnActiveDistribution() public {
+        uint256 totalStake = 100 * WAD;
+        uint256 initialReward = 123 * WAD;
+        uint256 additionalReward = 32 * WAD;
+        uint256 initialDuration = 7 days;
+        uint256 initialRun = 1 days;
+        initFarm(totalStake, initialReward, initialDuration);
+        skip(initialRun);
+
+        uint256 snapshot = vm.snapshot();
+
+        // call setRewardsDuration followed by notifyRewardAmount in the same block
+        rewards.setRewardsDuration(13 days);
+        setupReward(additionalReward);
+
+        assertEq(rewards.rewardPerTokenStored(), initialRun * (initialReward / initialDuration) * WAD / totalStake);
+        assertEq(rewards.lastUpdateTime(), block.timestamp);
+        assertEq(rewards.rewardRate(), ((initialDuration - initialRun) * (initialReward / initialDuration) + additionalReward) / 13 days);
+        assertEq(rewards.periodFinish(), block.timestamp + 13 days);
+        assertEq(rewards.rewardsDuration(), 13 days);
+
+        skip(13 days);
+
+        rewards.exit();
+
+        uint256 rewardLeft = initialReward % initialDuration + ((initialDuration - initialRun) * (initialReward / initialDuration) + additionalReward) % 13 days; // dust lost due to rewardRate being rounded down
+        uint256 rewardPaid = initialReward + additionalReward - rewardLeft;
+        assertEq(rewardGem.balanceOf(address(this)), rewardPaid);
+        assertEq(rewardGem.balanceOf(address(rewards)), rewardLeft);
+        assertEq(gem.balanceOf(address(this)), totalStake);
+        assertEq(gem.balanceOf(address(rewards)), 0);
+
+        // reset farm
+        vm.revertTo(snapshot);
+
+        // call notifyRewardAmount followed by setRewardsDuration in the same block
+        setupReward(additionalReward);
+        rewards.setRewardsDuration(13 days);
+
+        // same values as before
+        assertEq(rewards.rewardPerTokenStored(), initialRun * (initialReward / initialDuration) * WAD / totalStake);
+        assertEq(rewards.lastUpdateTime(), block.timestamp);
+        assertEq(rewards.rewardRate(), ((initialDuration - initialRun) * (initialReward / initialDuration) + additionalReward) / 13 days);
+        assertEq(rewards.periodFinish(), block.timestamp + 13 days);
+        assertEq(rewards.rewardsDuration(), 13 days);
+
+        skip(13 days);
+
+        rewards.exit();
+
+        // same values as before
+        rewardLeft = initialReward % initialDuration + ((initialDuration - initialRun) * (initialReward / initialDuration) + additionalReward) % 13 days; // dust lost due to rewardRate being rounded down
+        rewardPaid = initialReward + additionalReward - rewardLeft;
+        assertEq(rewardGem.balanceOf(address(this)), rewardPaid);
+        assertEq(rewardGem.balanceOf(address(rewards)), rewardLeft);
+        assertEq(gem.balanceOf(address(this)), totalStake);
+        assertEq(gem.balanceOf(address(rewards)), 0);
     }
 
     function testSetRewardsDurationAfterDistributionPeriod() public {
@@ -323,7 +443,7 @@ contract StakingRewardsTest is Test {
         rewards.withdraw(0);
     }
 
-    function testWithdrwal() public {
+    function testWithdrawal() public {
         setupStakingToken(100 * WAD);
         rewards.stake(100 * WAD);
 

@@ -36,10 +36,15 @@ struct FarmingInitResult {
 
 library FarmingInit {
     function init(FarmingInitParams memory p) internal returns (FarmingInitResult memory r) {
+        address stakingToken = StakingRewardsLike(p.rewards).stakingToken();
+        address rewardsToken = StakingRewardsLike(p.rewards).rewardsToken();
+
+        require(stakingToken != rewardsToken, "FarmingInit/rewards-token-same-as-staking-token");
+
         require(DssVestWithGemLike(p.vest).gem() == p.ngt, "FarmingInit/vest-gem-mismatch");
 
-        require(StakingRewardsLike(p.rewards).rewardsToken() == p.ngt, "FarmingInit/rewards-rewards-token-mismatch");
-        require(StakingRewardsLike(p.rewards).stakingToken() == p.nst, "FarmingInit/rewards-staking-token-mismatch");
+        require(stakingToken == p.nst, "FarmingInit/rewards-staking-token-mismatch");
+        require(rewardsToken == p.ngt, "FarmingInit/rewards-rewards-token-mismatch");
         require(StakingRewardsLike(p.rewards).lastUpdateTime() == 0, "FarmingInit/rewards-last-update-time-invalid");
 
         require(VestedRewardsDistributionLike(p.dist).gem() == p.ngt, "FarmingInit/dist-gem-mismatch");

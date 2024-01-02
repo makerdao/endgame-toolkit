@@ -135,6 +135,11 @@ contract StakingRewards is IStakingRewards, Pausable, ReentrancyGuard {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
+    /// @dev Before calling this function, the caller should send at least `reward` tokens to the contract.
+    /// Otherwhise, if the amount sent is less than `reward` passed as a parameter,
+    /// the unclaimed rewards of other users would be used in the new period.
+    /// This would result in missing tokens, which might cause `getReward` to fail for some users.
+    /// We advise the use of wrapper contracts to perform the transfer and call this function atomically.
     function notifyRewardAmount(uint256 reward) external override onlyRewardsDistribution updateReward(address(0)) {
         if (block.timestamp >= periodFinish) {
             rewardRate = reward / rewardsDuration;
@@ -148,7 +153,7 @@ contract StakingRewards is IStakingRewards, Pausable, ReentrancyGuard {
         // This keeps the reward rate in the right range, preventing overflows due to
         // very high values of rewardRate in the earned and rewardsPerToken functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
-        uint balance = rewardsToken.balanceOf(address(this));
+        uint256 balance = rewardsToken.balanceOf(address(this));
         require(rewardRate <= balance / rewardsDuration, "Provided reward too high");
 
         lastUpdateTime = block.timestamp;

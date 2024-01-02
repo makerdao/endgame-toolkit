@@ -61,6 +61,8 @@ contract StakingRewards is IStakingRewards, Pausable, ReentrancyGuard {
         address _rewardsToken,
         address _stakingToken
     ) Pausable(_owner) {
+        require(_rewardsToken != _stakingToken, "Rewards and staking tokens must not be the same");
+
         rewardsToken = IERC20(_rewardsToken);
         stakingToken = IERC20(_stakingToken);
         rewardsDistribution = _rewardsDistribution;

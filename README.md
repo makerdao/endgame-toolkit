@@ -56,7 +56,7 @@ through a [`StakingRewards`](#stakingrewards) contract.
 
 #### `StakingRewards`
 
-`StakingRewards` is a port of [Synthetix `StakingRewards`][staking-rewards]. Full diff can be found [here](https://www.diffchecker.com/9JdI2pIN/). The changes made include:
+`StakingRewards` is a port of [Synthetix `StakingRewards`][staking-rewards]. The changes made include:
 
 - Upgrade to the Solidity version from 0.5.x to 0.8.x.
   - It was required some reorganization of the internal structure because of changes in the inheritance resolution
@@ -75,6 +75,8 @@ through a [`StakingRewards`](#stakingrewards) contract.
   - There is a possible scenario where the amount of tokens transferred to the contract is less than the amount used as
     a parameter in `notifyRewardAmount`. In such case, if the staking token and rewards token are the same, the staked
     tokens would be incorporated into the new reward period, causing stakers to lose their capital.
+
+Full diff is referenced [here](./src/synthetix/StakingRewards.sol#L8).
 
 ## Contributing
 

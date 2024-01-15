@@ -137,8 +137,8 @@ contract StakingRewards is IStakingRewards, Pausable, ReentrancyGuard {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    /// @dev Before calling this function, the caller should send at least `reward` tokens to the contract.
-    /// Otherwhise, if the amount sent is less than `reward` passed as a parameter,
+    /// Before calling this function, the caller should send at least `reward` tokens to the contract.
+    /// Otherwise, if the amount sent is less than `reward` passed as a parameter,
     /// the unclaimed rewards of other users would be used in the new period.
     /// This would result in missing tokens, which might cause `getReward` to fail for some users.
     /// We advise the use of wrapper contracts to perform the transfer and call this function atomically.

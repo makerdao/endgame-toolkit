@@ -76,8 +76,6 @@ through a [`StakingRewards`](#stakingrewards) contract.
     a parameter in `notifyRewardAmount`. In such case, if the staking token and rewards token are the same, the staked
     tokens would be incorporated into the new reward period, causing stakers to lose their capital.
 
-Full diff is referenced [here](./src/synthetix/StakingRewards.sol#L8).
-
 ## Contributing
 
 ### Requirements

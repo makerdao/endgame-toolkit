@@ -69,6 +69,11 @@ contract StakingRewardsTest is Test {
         assertEq(f.rewardsDistribution(), address(this));
     }
 
+    function testRevertConstructorWhenStakingAndRewardsTokenAreTheSame() public {
+        vm.expectRevert("Rewards and staking tokens must not be the same");
+        new StakingRewards(address(this), address(this), address(gem), address(gem));
+    }
+
     function testSetRewardsDistribution() public {
         rewards.setRewardsDistribution(address(0));
         assertEq(rewards.rewardsDistribution(), address(0));
@@ -297,9 +302,12 @@ contract StakingRewardsTest is Test {
 
         rewards.setRewardsDuration(newDuration);
 
-        assertEq(rewards.rewardPerTokenStored(), initialRun * (totalReward / initialDuration) * WAD / totalStake);
+        assertEq(rewards.rewardPerTokenStored(), (initialRun * (totalReward / initialDuration) * WAD) / totalStake);
         assertEq(rewards.lastUpdateTime(), block.timestamp);
-        assertEq(rewards.rewardRate(), (initialDuration - initialRun) * (totalReward / initialDuration) / newDuration);
+        assertEq(
+            rewards.rewardRate(),
+            ((initialDuration - initialRun) * (totalReward / initialDuration)) / newDuration
+        );
         assertEq(rewards.periodFinish(), block.timestamp + newDuration);
         assertEq(rewards.rewardsDuration(), newDuration);
 
@@ -307,7 +315,8 @@ contract StakingRewardsTest is Test {
 
         rewards.exit();
 
-        uint256 rewardLeft = totalReward % initialDuration + (initialDuration - initialRun) * (totalReward / initialDuration) % newDuration; // dust lost due to rewardRate being rounded down
+        uint256 rewardLeft = (totalReward % initialDuration) +
+            (((initialDuration - initialRun) * (totalReward / initialDuration)) % newDuration); // dust lost due to rewardRate being rounded down
         uint256 rewardPaid = totalReward - rewardLeft;
         assertEq(rewardGem.balanceOf(address(this)), rewardPaid);
         assertEq(rewardGem.balanceOf(address(rewards)), rewardLeft);
@@ -336,7 +345,7 @@ contract StakingRewardsTest is Test {
 
         rewards.setRewardsDuration(initialDuration - initialRun); // same duration as time left
 
-        assertEq(rewards.rewardPerTokenStored(), initialRun * (totalReward / initialDuration) * WAD / totalStake);
+        assertEq(rewards.rewardPerTokenStored(), (initialRun * (totalReward / initialDuration) * WAD) / totalStake);
         assertEq(rewards.lastUpdateTime(), block.timestamp);
         assertEq(rewards.rewardRate(), prevRewardRate);
         assertEq(rewards.periodFinish(), prevPeriodFinish);
@@ -358,9 +367,12 @@ contract StakingRewardsTest is Test {
         rewards.setRewardsDuration(13 days);
         setupReward(additionalReward);
 
-        assertEq(rewards.rewardPerTokenStored(), initialRun * (initialReward / initialDuration) * WAD / totalStake);
+        assertEq(rewards.rewardPerTokenStored(), (initialRun * (initialReward / initialDuration) * WAD) / totalStake);
         assertEq(rewards.lastUpdateTime(), block.timestamp);
-        assertEq(rewards.rewardRate(), ((initialDuration - initialRun) * (initialReward / initialDuration) + additionalReward) / 13 days);
+        assertEq(
+            rewards.rewardRate(),
+            ((initialDuration - initialRun) * (initialReward / initialDuration) + additionalReward) / 13 days
+        );
         assertEq(rewards.periodFinish(), block.timestamp + 13 days);
         assertEq(rewards.rewardsDuration(), 13 days);
 
@@ -368,7 +380,8 @@ contract StakingRewardsTest is Test {
 
         rewards.exit();
 
-        uint256 rewardLeft = initialReward % initialDuration + ((initialDuration - initialRun) * (initialReward / initialDuration) + additionalReward) % 13 days; // dust lost due to rewardRate being rounded down
+        uint256 rewardLeft = (initialReward % initialDuration) +
+            (((initialDuration - initialRun) * (initialReward / initialDuration) + additionalReward) % 13 days); // dust lost due to rewardRate being rounded down
         uint256 rewardPaid = initialReward + additionalReward - rewardLeft;
         assertEq(rewardGem.balanceOf(address(this)), rewardPaid);
         assertEq(rewardGem.balanceOf(address(rewards)), rewardLeft);
@@ -383,9 +396,12 @@ contract StakingRewardsTest is Test {
         rewards.setRewardsDuration(13 days);
 
         // same values as before
-        assertEq(rewards.rewardPerTokenStored(), initialRun * (initialReward / initialDuration) * WAD / totalStake);
+        assertEq(rewards.rewardPerTokenStored(), (initialRun * (initialReward / initialDuration) * WAD) / totalStake);
         assertEq(rewards.lastUpdateTime(), block.timestamp);
-        assertEq(rewards.rewardRate(), ((initialDuration - initialRun) * (initialReward / initialDuration) + additionalReward) / 13 days);
+        assertEq(
+            rewards.rewardRate(),
+            ((initialDuration - initialRun) * (initialReward / initialDuration) + additionalReward) / 13 days
+        );
         assertEq(rewards.periodFinish(), block.timestamp + 13 days);
         assertEq(rewards.rewardsDuration(), 13 days);
 
@@ -394,7 +410,9 @@ contract StakingRewardsTest is Test {
         rewards.exit();
 
         // same values as before
-        rewardLeft = initialReward % initialDuration + ((initialDuration - initialRun) * (initialReward / initialDuration) + additionalReward) % 13 days; // dust lost due to rewardRate being rounded down
+        rewardLeft =
+            (initialReward % initialDuration) +
+            (((initialDuration - initialRun) * (initialReward / initialDuration) + additionalReward) % 13 days); // dust lost due to rewardRate being rounded down
         rewardPaid = initialReward + additionalReward - rewardLeft;
         assertEq(rewardGem.balanceOf(address(this)), rewardPaid);
         assertEq(rewardGem.balanceOf(address(rewards)), rewardLeft);

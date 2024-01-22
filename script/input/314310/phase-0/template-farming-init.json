@@ -1,0 +1,6 @@
+{
+  "changelog": "address",
+  "vestTot": "uint256",
+  "vestBgn": "uint256",
+  "vestTau": "uint256"
+}

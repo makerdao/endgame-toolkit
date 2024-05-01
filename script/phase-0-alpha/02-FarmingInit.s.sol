@@ -20,6 +20,7 @@ import {ScriptTools} from "dss-test/ScriptTools.sol";
 
 import {Reader} from "../helpers/Reader.sol";
 import {FarmingInit, FarmingInitParams} from "../dependencies/phase-0-alpha/FarmingInit.sol";
+import {VestInit, VestInitParams, VestCreateParams} from "../dependencies/VestInit.sol";
 
 contract Phase0Alpha_FarmingInitScript is Script {
     string internal constant NAME = "phase-0-alpha/farming-init";
@@ -35,9 +36,22 @@ contract Phase0Alpha_FarmingInitScript is Script {
 
         Reader config = new Reader(ScriptTools.loadConfig());
 
-        uint256 vestId = config.readUint(".vestId");
+        uint256 vestId = config.readOr(".vestId", type(uint256).max);
 
         vm.startBroadcast();
+
+        VestInit.init(vest, VestInitParams({cap: type(uint256).max}));
+
+        if (vestId == type(uint256).max) {
+            uint256 vestTot = config.envOrReadUint("FOUNDRY_VEST_TOT", ".vestTot");
+            uint256 vestTau = config.envOrReadUint("FOUNDRY_VEST_TAU", ".vestTau");
+            uint256 vestBgn = config.envOrReadUint("FOUNDRY_VEST_BGN", ".vestBgn");
+
+            vestId = VestInit.create(
+                vest,
+                VestCreateParams({usr: dist, tot: vestTot, tau: vestTau, bgn: vestBgn, eta: 0})
+            );
+        }
 
         FarmingInit.init(
             FarmingInitParams({ngt: ngt, nst: nst, dist: dist, rewards: rewards, vest: vest, vestId: vestId})

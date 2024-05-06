@@ -17,11 +17,17 @@ pragma solidity ^0.8.16;
 
 import {Script} from "forge-std/Script.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
+import {MockERC20} from "../../src/mocks/MockERC20.sol";
+import {VestInit, VestInitParams} from "../dependencies/VestInit.sol";
 
 struct Result {
     address nst;
     address ngt;
     address vest;
+}
+
+interface RelyLike {
+    function rely(address) external;
 }
 
 contract Phase0Alpha_VestAndTokensDeployScript is Script {
@@ -30,9 +36,13 @@ contract Phase0Alpha_VestAndTokensDeployScript is Script {
     function run() external returns (Result memory res) {
         vm.startBroadcast();
 
-        res.nst = deployCode("./out/StakingRewards.t.sol:TestToken", abi.encode("NST", 18));
-        res.ngt = deployCode("./out/StakingRewards.t.sol:TestToken", abi.encode("NGT", 18));
+        res.nst = address(new MockERC20("New Stable Token", "NST"));
+        res.ngt = address(new MockERC20("New Governance Token", "NGT"));
         res.vest = deployCode("./out/DssVest.sol:DssVestMintable", abi.encode(address(res.ngt)));
+
+        RelyLike(res.ngt).rely(res.vest);
+
+        VestInit.init(res.vest, VestInitParams({cap: type(uint256).max}));
 
         vm.stopBroadcast();
 

@@ -29,14 +29,17 @@ contract Phase0Alpha_FarmingDeployScript is Script {
     string internal constant NAME = "phase-0-alpha/farming-deploy";
 
     function run() external {
-        Reader reader = new Reader(ScriptTools.loadConfig());
+        Reader deps = new Reader(ScriptTools.loadDependencies());
 
-        address admin = reader.envOrReadAddress("FOUNDRY_ADMIN", ".admin");
-        address ngt = reader.envOrReadAddress("FOUNDRY_NGT", ".ngt");
-        address nst = reader.envOrReadAddress("FOUNDRY_NST", ".nst");
-        address vest = reader.envOrReadAddress("FOUNDRY_VEST", ".vest");
-        address dist = reader.readAddressOptional(".dist");
-        address rewards = reader.readAddressOptional(".rewards");
+        address ngt = deps.envOrReadAddress("FOUNDRY_NGT", ".ngt");
+        address nst = deps.envOrReadAddress("FOUNDRY_NST", ".nst");
+        address vest = deps.envOrReadAddress("FOUNDRY_VEST", ".vest");
+
+        Reader config = new Reader(ScriptTools.loadConfig());
+
+        address admin = config.envOrReadAddress("FOUNDRY_ADMIN", ".admin");
+        address dist = config.readAddressOptional(".dist");
+        address rewards = config.readAddressOptional(".rewards");
 
         vm.startBroadcast();
 

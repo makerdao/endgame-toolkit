@@ -44,7 +44,7 @@ be done at code level. Future immutability will be enforced off-chain by governa
 
 ### Farms
 
-For more details about the farming solution in the scope of the Endgame, please refer to the [technical document](https://hackmd.io/@amusingaxl/endgame-token-farming).
+For more details about the farming solution in the scope of the Endgame, please refer to the [technical document](https://hackmd.io/@dewiz/endgame-token-farming).
 
 #### `VestedRewardsDistribution`
 

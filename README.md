@@ -16,6 +16,7 @@ A set of components for the [SubDAO](https://endgame.makerdao.com/subdaos/overvi
   - [Install dependencies](#install-dependencies)
   - [Build](#build)
   - [Run tests](#run-tests)
+- [Sherlock Contest:](#sherlock-contest)
 
 <!-- vim-markdown-toc -->
 
@@ -115,6 +116,11 @@ Notice that if you use `forge build --force`, the `out/` directory is going to b
 ```bash
 forge test -vvv
 ```
+
+## Sherlock Contest:
+
+You can find general (and particular for this repository) scope, definitions, rules, disclaimers and known issues that apply to the Sherlock contest [here](https://github.com/makerdao/sherlock-contest/blob/master/README.md).
+Content listed there should be regarded as if it was in this readme.
 
 [mcd-pause-proxy]: https://etherscan.io/address/0xbe8e3e3618f7474f8cb1d074a26affef007e98fb#code
 [dss-vest]: https://github.com/makerdao/dss-vest/blob/19a9d663bb3a2737f1f0c763365f1dfc6788aad2/src/DssVest.sol#L223-L225

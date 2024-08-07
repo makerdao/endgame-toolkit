@@ -30,9 +30,9 @@ contract Phase0_FarmingDeployScript is Script {
 
     function run() external {
         Reader reader = new Reader(ScriptTools.loadConfig());
-        ChangelogLike changelog = ChangelogLike(reader.envOrReadAddress("FOUNDRY_CHANGELOG", ".changelog"));
+        ChainlogLike chainlog = ChainlLogLike(reader.envOrReadAddress("FOUNDRY_CHAINLOG", ".chainlog"));
 
-        address admin = changelog.getAddress("MCD_PAUSE_PROXY");
+        address admin = chainlog.getAddress("MCD_PAUSE_PROXY");
 
         address ngt = reader.envOrReadAddress("FOUNDRY_NGT", ".ngt");
         address nst = reader.envOrReadAddress("FOUNDRY_NST", ".nst");
@@ -70,6 +70,6 @@ contract Phase0_FarmingDeployScript is Script {
     }
 }
 
-interface ChangelogLike {
+interface ChainlLogLike {
     function getAddress(bytes32 _key) external view returns (address addr);
 }

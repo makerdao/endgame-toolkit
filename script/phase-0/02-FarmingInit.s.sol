@@ -48,7 +48,7 @@ contract Phase0_FarmingInitScript is Script {
         Reader config = new Reader(ScriptTools.loadConfig());
         Reader deps = new Reader(ScriptTools.loadDependencies());
 
-        address changelog = config.envOrReadAddress("FOUNDRY_CHANGELOG", ".changelog");
+        address chainlog = config.envOrReadAddress("FOUNDRY_CHAINLOG", ".chainlog");
         uint256 vestTot = config.envOrReadUint("FOUNDRY_VEST_TOT", ".vestTot");
         uint256 vestBgn = config.envOrReadUint("FOUNDRY_VEST_BGN", ".vestBgn");
         uint256 vestTau = config.envOrReadUint("FOUNDRY_VEST_TAU", ".vestTau");
@@ -72,7 +72,7 @@ contract Phase0_FarmingInitScript is Script {
 
         VestInitParams memory vestInitCfg = VestInitParams({cap: type(uint256).max});
 
-        DssInstance memory dss = MCD.loadFromChainlog(changelog);
+        DssInstance memory dss = MCD.loadFromChainlog(chainlog);
         address pauseProxy = dss.chainlog.getAddress("MCD_PAUSE_PROXY");
 
         vm.startBroadcast();

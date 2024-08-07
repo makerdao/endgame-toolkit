@@ -5,6 +5,7 @@ script = 'script'
 libs = ['lib']
 solc_version = '0.8.16'
 optimizer = true
+unchecked_cheatcode_artifacts = true
 fs_permissions = [
     { access = "read", path = "./out/" },
     { access = "read", path = "./script/input/" },

@@ -33,7 +33,7 @@ contract Phase1b_FarmingDeployScript is Script {
         address nst = reader.envOrReadAddress("FOUNDRY_NST", ".nst");
 
         vm.startBroadcast();
-        
+
         address rewards = StakingRewardsDeploy.deploy(
             StakingRewardsDeployParams({owner: admin, stakingToken: nst, rewardsToken: address(0)})
         );

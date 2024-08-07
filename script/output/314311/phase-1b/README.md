@@ -1,1 +1,1 @@
-Script outputs for Mainnet for `phase-1b`.
+Script outputs for Tenderly Testnets for `phase-1b`.

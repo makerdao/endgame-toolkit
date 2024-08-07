@@ -1,3 +1,5 @@
 {
-  "nst": "address"
+  "admin": "address: the owner of the contract (usually the MCD_PAUSE_PROXY address)",
+  "nst": "address: the address for NST"
+  
 }

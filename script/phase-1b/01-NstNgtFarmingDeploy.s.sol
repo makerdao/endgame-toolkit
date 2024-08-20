@@ -20,29 +20,54 @@ import {ScriptTools} from "dss-test/ScriptTools.sol";
 
 import {Reader} from "../helpers/Reader.sol";
 import {StakingRewardsDeploy, StakingRewardsDeployParams} from "../dependencies/StakingRewardsDeploy.sol";
+import {
+    VestedRewardsDistributionDeploy,
+    VestedRewardsDistributionDeployParams
+} from "../dependencies/VestedRewardsDistributionDeploy.sol";
 
-contract Phase1b_FarmingDeployScript is Script {
-    string internal constant NAME = "phase-1b/farming-deploy";
-
+contract Phase0_NstNgtFarmingDeployScript is Script {
     ChainlogLike internal constant chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
+
+    string internal constant NAME = "phase-0/nst-ngt-farming-deploy";
 
     function run() external {
         Reader reader = new Reader(ScriptTools.loadConfig());
 
         address admin = chainlog.getAddress("MCD_PAUSE_PROXY");
+
+        address ngt = reader.envOrReadAddress("FOUNDRY_NGT", ".ngt");
         address nst = reader.envOrReadAddress("FOUNDRY_NST", ".nst");
+        address vest = reader.envOrReadAddress("FOUNDRY_VEST", ".vest");
+        address dist = reader.readAddressOptional(".dist");
+        address rewards = reader.readAddressOptional(".rewards");
 
         vm.startBroadcast();
 
-        address rewards = StakingRewardsDeploy.deploy(
-            StakingRewardsDeployParams({owner: admin, stakingToken: nst, rewardsToken: address(0)})
-        );
+        if (rewards == address(0)) {
+            rewards = StakingRewardsDeploy.deploy(
+                StakingRewardsDeployParams({owner: admin, stakingToken: nst, rewardsToken: ngt})
+            );
+        }
+
+        if (dist == address(0)) {
+            dist = VestedRewardsDistributionDeploy.deploy(
+                VestedRewardsDistributionDeployParams({
+                    deployer: msg.sender,
+                    owner: admin,
+                    vest: vest,
+                    rewards: rewards
+                })
+            );
+        }
 
         vm.stopBroadcast();
 
         ScriptTools.exportContract(NAME, "admin", admin);
+        ScriptTools.exportContract(NAME, "ngt", ngt);
         ScriptTools.exportContract(NAME, "nst", nst);
+        ScriptTools.exportContract(NAME, "dist", dist);
         ScriptTools.exportContract(NAME, "rewards", rewards);
+        ScriptTools.exportContract(NAME, "vest", vest);
     }
 }
 

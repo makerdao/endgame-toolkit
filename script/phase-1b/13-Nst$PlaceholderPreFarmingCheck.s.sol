@@ -18,21 +18,26 @@ pragma solidity ^0.8.16;
 import {Script} from "forge-std/Script.sol";
 import {Reader} from "../helpers/Reader.sol";
 
-contract Phase1b_FarmingCheckScript is Script {
+contract Phase1b_Nst$PlaceholderPreFarmingCheckScript is Script {
+    ChainlogLike internal constant chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
+
     function run() external returns (bool) {
         Reader deps = new Reader("");
         deps.loadDependenciesOrConfig();
 
+        address admin = chainlog.getAddress("MCD_PAUSE_PROXY");
         address nst = deps.envOrReadAddress("FOUNDRY_NST", ".nst");
-        address admin = deps.readAddress(".admin");
         address rewards = deps.readAddress(".rewards");
 
-        require(StakingRewardsLike(rewards).owner() == admin, "StakingRewards/admin-not-owner");
-        require(StakingRewardsLike(rewards).rewardsToken() == address(0), "StakingRewards/invalid-rewards-token");
-        require(StakingRewardsLike(rewards).stakingToken() == nst, "StakingRewards/invalid-rewards-token");
+        require(StakingRewardsLike(rewards).owner() == admin, "PlaceholderPreFarmingCheck/admin-not-owner");
+        require(
+            StakingRewardsLike(rewards).rewardsToken() == address(0),
+            "PlaceholderPreFarmingCheck/invalid-rewards-token"
+        );
+        require(StakingRewardsLike(rewards).stakingToken() == nst, "PlaceholderPreFarmingCheck/invalid-rewards-token");
         require(
             StakingRewardsLike(rewards).rewardsDistribution() == address(0),
-            "StakingRewards/invalid-rewards-distribution"
+            "PlaceholderPreFarmingCheck/invalid-rewards-distribution"
         );
 
         return true;

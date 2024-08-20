@@ -28,8 +28,6 @@ struct FarmingInitParams {
 }
 
 library FarmingInit {
-    ChainlogLike internal constant chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
-
     function init(FarmingInitParams memory p) internal {
         address stakingToken = StakingRewardsLike(p.rewards).stakingToken();
         address rewardsToken = StakingRewardsLike(p.rewards).rewardsToken();
@@ -64,9 +62,6 @@ library FarmingInit {
 
         // Set the `vestId` in `dist`
         VestedRewardsDistributionInit.init(p.dist, VestedRewardsDistributionInitParams({vestId: p.vestId}));
-
-        chainlog.setAddress("FARM_NST_NGT", p.rewards);
-        chainlog.setAddress("REWARDS_DISTRIBUTION_NST_NGT", p.dist);
     }
 }
 
@@ -104,8 +99,4 @@ interface VestedRewardsDistributionLike {
     function gem() external view returns (address);
 
     function stakingRewards() external view returns (address);
-}
-
-interface ChainlogLike {
-    function setAddress(bytes32 key, address addr) external;
 }

@@ -23,7 +23,9 @@ struct NstNgtFarmingInitParams {
     address nst;
     address ngt;
     address rewards;
+    bytes32 rewardsKey; // Chainlog key
     address dist;
+    bytes32 distKey; // Chainlog key
     address vest;
     uint256 vestTot;
     uint256 vestBgn;
@@ -77,8 +79,8 @@ library NstNgtFarmingInit {
 
         r.vestId = vestId;
 
-        chainlog.setAddress("FARM_NST_NGT", p.rewards);
-        chainlog.setAddress("REWARDS_DISTRIBUTION_NST_NGT", p.dist);
+        chainlog.setAddress(p.rewardsKey, p.rewards);
+        chainlog.setAddress(p.distKey, p.dist);
     }
 }
 

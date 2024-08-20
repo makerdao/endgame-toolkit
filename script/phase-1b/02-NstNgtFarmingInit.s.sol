@@ -25,7 +25,7 @@ import {
     NstNgtFarmingInit,
     NstNgtFarmingInitParams,
     NstNgtFarmingInitResult
-} from "../dependencies/phase-0/NstNgtFarmingInit.sol";
+} from "../dependencies/phase-1b/NstNgtFarmingInit.sol";
 
 interface ProxyLike {
     function owner() external view returns (address);
@@ -48,7 +48,7 @@ contract Phase1b_NstNgtFarmingInitScript is Script {
 
     ChainlogLike internal constant chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
 
-    string internal constant NAME = "phase-0/nst-ngt-farming-init";
+    string internal constant NAME = "phase-1b/nst-ngt-farming-init";
 
     function run() external {
         Reader config = new Reader(ScriptTools.loadConfig());
@@ -68,7 +68,9 @@ contract Phase1b_NstNgtFarmingInitScript is Script {
             ngt: ngt,
             nst: nst,
             dist: dist,
+            distKey: "REWARDS_DISTRIBUTION_NST_NGT",
             rewards: rewards,
+            rewardsKey: "FARM_NST_NGT",
             vest: vest,
             vestTot: vestTot,
             vestBgn: vestBgn,

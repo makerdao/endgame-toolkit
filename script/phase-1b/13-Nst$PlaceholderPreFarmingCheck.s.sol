@@ -44,6 +44,10 @@ contract Phase1b_Nst$PlaceholderPreFarmingCheckScript is Script {
     }
 }
 
+interface ChainlogLike {
+    function getAddress(bytes32 _key) external view returns (address addr);
+}
+
 interface StakingRewardsLike {
     function owner() external view returns (address);
 

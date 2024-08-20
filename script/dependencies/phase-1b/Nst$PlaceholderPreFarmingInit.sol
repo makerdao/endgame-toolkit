@@ -18,6 +18,7 @@ pragma solidity ^0.8.16;
 struct Nst$PlaceholderPreFarmingInitParams {
     address nst;
     address rewards;
+    bytes32 rewardsKey;
 }
 
 library Nst$PlaceholderPreFarmingInit {
@@ -41,7 +42,7 @@ library Nst$PlaceholderPreFarmingInit {
             "Nst$PlaceholderPreFarmingInit/invalid-owner"
         );
 
-        chainlog.setAddress("FARM_$PLACEHOLDER", p.rewards);
+        chainlog.setAddress(p.rewardsKey, p.rewards);
     }
 }
 

@@ -17,7 +17,7 @@ pragma solidity ^0.8.16;
 
 import {Script} from "forge-std/Script.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
-import {MCD, DssInstance, ScriptTools} from "dss-test/DssTest.sol";
+import {ScriptTools} from "dss-test/DssTest.sol";
 
 import {Reader} from "../helpers/Reader.sol";
 import {FarmingInit, FarmingInitParams, FarmingInitResult} from "../dependencies/phase-0/FarmingInit.sol";
@@ -42,13 +42,14 @@ contract FarmingInitSpell {
 contract Phase0_FarmingInitScript is Script {
     using ScriptTools for string;
 
+    ChainlogLike internal constant chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
+
     string internal constant NAME = "phase-0/farming-init";
 
     function run() external {
         Reader config = new Reader(ScriptTools.loadConfig());
         Reader deps = new Reader(ScriptTools.loadDependencies());
 
-        address changelog = config.envOrReadAddress("FOUNDRY_CHANGELOG", ".changelog");
         uint256 vestTot = config.envOrReadUint("FOUNDRY_VEST_TOT", ".vestTot");
         uint256 vestBgn = config.envOrReadUint("FOUNDRY_VEST_BGN", ".vestBgn");
         uint256 vestTau = config.envOrReadUint("FOUNDRY_VEST_TAU", ".vestTau");
@@ -72,8 +73,7 @@ contract Phase0_FarmingInitScript is Script {
 
         VestInitParams memory vestInitCfg = VestInitParams({cap: type(uint256).max});
 
-        DssInstance memory dss = MCD.loadFromChainlog(changelog);
-        address pauseProxy = dss.chainlog.getAddress("MCD_PAUSE_PROXY");
+        address pauseProxy = chainlog.getAddress("MCD_PAUSE_PROXY");
 
         vm.startBroadcast();
 
@@ -93,4 +93,8 @@ contract Phase0_FarmingInitScript is Script {
         ScriptTools.exportContract(NAME, "vest", vest);
         ScriptTools.exportValue(NAME, "vestId", res.vestId);
     }
+}
+
+interface ChainlogLike {
+    function getAddress(bytes32 _key) external view returns (address addr);
 }

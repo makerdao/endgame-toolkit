@@ -18,7 +18,7 @@ pragma solidity ^0.8.16;
 import {Script} from "forge-std/Script.sol";
 import {Reader} from "../helpers/Reader.sol";
 
-contract Phase0Alpha_FarmingCheckScript is Script {
+contract Phase1b_NstNgtFarmingCheckScript is Script {
     function run() external returns (bool) {
         Reader deps = new Reader("");
         deps.loadDependenciesOrConfig();
@@ -86,19 +86,11 @@ interface StakingRewardsLike {
 interface DssVestWithGemLike {
     function gem() external view returns (address);
 
-    function tot(uint256 vestId) external view returns (uint256);
+    function mgr(uint256 _id) external view returns (address);
 
-    function bgn(uint256 vestId) external view returns (uint256);
+    function res(uint256 _id) external view returns (uint256);
 
-    function clf(uint256 vestId) external view returns (uint256);
-
-    function fin(uint256 vestId) external view returns (uint256);
-
-    function mgr(uint256 vestId) external view returns (address);
-
-    function res(uint256 vestId) external view returns (uint256);
-
-    function usr(uint256 vestId) external view returns (address);
+    function usr(uint256 _id) external view returns (address);
 
     function valid(uint256 _id) external view returns (bool);
 }

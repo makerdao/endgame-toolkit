@@ -19,44 +19,51 @@ import {StakingRewardsInit, StakingRewardsInitParams} from "../StakingRewardsIni
 import {VestedRewardsDistributionInit, VestedRewardsDistributionInitParams} from "../VestedRewardsDistributionInit.sol";
 import {VestInit, VestCreateParams} from "../VestInit.sol";
 
-struct FarmingInitParams {
+struct NstNgtFarmingInitParams {
     address nst;
     address ngt;
     address rewards;
+    bytes32 rewardsKey; // Chainlog key
     address dist;
+    bytes32 distKey; // Chainlog key
     address vest;
     uint256 vestTot;
     uint256 vestBgn;
     uint256 vestTau;
 }
 
-struct FarmingInitResult {
+struct NstNgtFarmingInitResult {
     uint256 vestId;
 }
 
-library FarmingInit {
-    function init(FarmingInitParams memory p) internal returns (FarmingInitResult memory r) {
+library NstNgtFarmingInit {
+    ChainlogLike internal constant chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
+
+    function init(NstNgtFarmingInitParams memory p) internal returns (NstNgtFarmingInitResult memory r) {
         address stakingToken = StakingRewardsLike(p.rewards).stakingToken();
         address rewardsToken = StakingRewardsLike(p.rewards).rewardsToken();
 
-        require(stakingToken != rewardsToken, "FarmingInit/rewards-token-same-as-staking-token");
+        require(stakingToken != rewardsToken, "NstNgtFarmingInit/rewards-token-same-as-staking-token");
 
-        require(DssVestWithGemLike(p.vest).gem() == p.ngt, "FarmingInit/vest-gem-mismatch");
+        require(DssVestWithGemLike(p.vest).gem() == p.ngt, "NstNgtFarmingInit/vest-gem-mismatch");
 
-        require(stakingToken == p.nst, "FarmingInit/rewards-staking-token-mismatch");
-        require(rewardsToken == p.ngt, "FarmingInit/rewards-rewards-token-mismatch");
-        require(StakingRewardsLike(p.rewards).lastUpdateTime() == 0, "FarmingInit/rewards-last-update-time-invalid");
+        require(stakingToken == p.nst, "NstNgtFarmingInit/rewards-staking-token-mismatch");
+        require(rewardsToken == p.ngt, "NstNgtFarmingInit/rewards-rewards-token-mismatch");
+        require(
+            StakingRewardsLike(p.rewards).lastUpdateTime() == 0,
+            "NstNgtFarmingInit/rewards-last-update-time-invalid"
+        );
 
-        require(VestedRewardsDistributionLike(p.dist).gem() == p.ngt, "FarmingInit/dist-gem-mismatch");
-        require(VestedRewardsDistributionLike(p.dist).dssVest() == p.vest, "FarmingInit/dist-dss-vest-mismatch");
+        require(VestedRewardsDistributionLike(p.dist).gem() == p.ngt, "NstNgtFarmingInit/dist-gem-mismatch");
+        require(VestedRewardsDistributionLike(p.dist).dssVest() == p.vest, "NstNgtFarmingInit/dist-dss-vest-mismatch");
         require(
             VestedRewardsDistributionLike(p.dist).stakingRewards() == p.rewards,
-            "FarmingInit/dist-staking-rewards-mismatch"
+            "NstNgtFarmingInit/dist-staking-rewards-mismatch"
         );
 
         // `vest` is expected to be an instance of `DssVestMintable`.
         // Check if minting rights on `ngt` were granted to `vest`.
-        require(WardsLike(p.ngt).wards(p.vest) == 1, "FarmingInit/missing-ngt-rely-vest");
+        require(WardsLike(p.ngt).wards(p.vest) == 1, "NstNgtFarmingInit/missing-ngt-rely-vest");
 
         // Set `dist` with  `rewardsDistribution` role in `rewards`.
         StakingRewardsInit.init(p.rewards, StakingRewardsInitParams({dist: p.dist}));
@@ -71,6 +78,9 @@ library FarmingInit {
         VestedRewardsDistributionInit.init(p.dist, VestedRewardsDistributionInitParams({vestId: vestId}));
 
         r.vestId = vestId;
+
+        chainlog.setAddress(p.rewardsKey, p.rewards);
+        chainlog.setAddress(p.distKey, p.dist);
     }
 }
 
@@ -96,4 +106,8 @@ interface VestedRewardsDistributionLike {
     function gem() external view returns (address);
 
     function stakingRewards() external view returns (address);
+}
+
+interface ChainlogLike {
+    function setAddress(bytes32 key, address addr) external;
 }

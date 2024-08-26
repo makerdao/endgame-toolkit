@@ -59,10 +59,6 @@ contract Phase1b_NstNgtFarmingCheckScript is Script {
     }
 }
 
-interface ChainlogLike {
-    function getAddress(bytes32 _key) external view returns (address addr);
-}
-
 interface WardsLike {
     function wards(address who) external view returns (uint256);
 }
@@ -89,14 +85,6 @@ interface StakingRewardsLike {
 
 interface DssVestWithGemLike {
     function gem() external view returns (address);
-
-    function tot(uint256 _id) external view returns (uint256);
-
-    function bgn(uint256 _id) external view returns (uint256);
-
-    function clf(uint256 _id) external view returns (uint256);
-
-    function fin(uint256 _id) external view returns (uint256);
 
     function mgr(uint256 _id) external view returns (address);
 

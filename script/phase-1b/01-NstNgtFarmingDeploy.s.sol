@@ -25,10 +25,10 @@ import {
     VestedRewardsDistributionDeployParams
 } from "../dependencies/VestedRewardsDistributionDeploy.sol";
 
-contract Phase0_NstNgtFarmingDeployScript is Script {
+contract Phase1b_NstNgtFarmingDeployScript is Script {
     ChainlogLike internal constant chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
 
-    string internal constant NAME = "phase-0/nst-ngt-farming-deploy";
+    string internal constant NAME = "phase-1b/nst-ngt-farming-deploy";
 
     function run() external {
         Reader reader = new Reader(ScriptTools.loadConfig());

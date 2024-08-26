@@ -17,7 +17,6 @@ pragma solidity ^0.8.16;
 
 import {Script} from "forge-std/Script.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
-import {ScriptTools} from "dss-test/DssTest.sol";
 
 import {Reader} from "../helpers/Reader.sol";
 import {VestInit, VestInitParams} from "../dependencies/VestInit.sol";
@@ -26,22 +25,6 @@ import {
     NstNgtFarmingInitParams,
     NstNgtFarmingInitResult
 } from "../dependencies/phase-1b/NstNgtFarmingInit.sol";
-
-interface ProxyLike {
-    function owner() external view returns (address);
-
-    function exec(address usr, bytes memory fax) external returns (bytes memory out);
-}
-
-contract NstNgtFarmingInitSpell {
-    function cast(
-        NstNgtFarmingInitParams memory farmingCfg,
-        VestInitParams calldata vestInitCfg
-    ) public returns (NstNgtFarmingInitResult memory) {
-        VestInit.init(farmingCfg.vest, vestInitCfg);
-        return NstNgtFarmingInit.init(farmingCfg);
-    }
-}
 
 contract Phase1b_NstNgtFarmingInitScript is Script {
     using ScriptTools for string;
@@ -99,6 +82,20 @@ contract Phase1b_NstNgtFarmingInitScript is Script {
         ScriptTools.exportContract(NAME, "vest", vest);
         ScriptTools.exportValue(NAME, "vestId", res.vestId);
     }
+}
+
+contract NstNgtFarmingInitSpell {
+    function cast(
+        NstNgtFarmingInitParams memory farmingCfg,
+        VestInitParams calldata vestInitCfg
+    ) public returns (NstNgtFarmingInitResult memory) {
+        VestInit.init(farmingCfg.vest, vestInitCfg);
+        return NstNgtFarmingInit.init(farmingCfg);
+    }
+}
+
+interface ProxyLike {
+    function exec(address usr, bytes memory fax) external returns (bytes memory out);
 }
 
 interface ChainlogLike {

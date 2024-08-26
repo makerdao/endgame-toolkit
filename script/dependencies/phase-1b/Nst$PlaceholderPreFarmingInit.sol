@@ -46,14 +46,6 @@ library Nst$PlaceholderPreFarmingInit {
     }
 }
 
-interface WardsLike {
-    function wards(address who) external view returns (uint256);
-}
-
-interface DssVestWithGemLike {
-    function gem() external view returns (address);
-}
-
 interface StakingRewardsLike {
     function lastUpdateTime() external view returns (uint256);
 
@@ -62,14 +54,6 @@ interface StakingRewardsLike {
     function rewardsToken() external view returns (address);
 
     function stakingToken() external view returns (address);
-}
-
-interface VestedRewardsDistributionLike {
-    function dssVest() external view returns (address);
-
-    function gem() external view returns (address);
-
-    function stakingRewards() external view returns (address);
 }
 
 interface ChainlogLike {

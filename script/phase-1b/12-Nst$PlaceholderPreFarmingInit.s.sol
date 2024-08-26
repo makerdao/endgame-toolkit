@@ -25,8 +25,6 @@ import {
 } from "../dependencies/phase-1b/Nst$PlaceholderPreFarmingInit.sol";
 
 interface ProxyLike {
-    function owner() external view returns (address);
-
     function exec(address usr, bytes memory fax) external returns (bytes memory out);
 }
 

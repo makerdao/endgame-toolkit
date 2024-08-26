@@ -15,31 +15,31 @@
 
 pragma solidity ^0.8.16;
 
-struct Nst$PlaceholderPreFarmingInitParams {
+struct Nst01PreFarmingInitParams {
     address nst;
     address rewards;
-    bytes32 rewardsKey;
+    bytes32 rewardsKey; // Chainlog key
 }
 
-library Nst$PlaceholderPreFarmingInit {
+library Nst01PreFarmingInit {
     ChainlogLike internal constant chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
 
-    function init(Nst$PlaceholderPreFarmingInitParams memory p) internal {
+    function init(Nst01PreFarmingInitParams memory p) internal {
         require(
             StakingRewardsLike(p.rewards).stakingToken() == p.nst,
-            "Nst$PlaceholderPreFarmingInit/rewards-staking-token-mismatch"
+            "Nst01PreFarmingInit/rewards-staking-token-mismatch"
         );
         require(
             StakingRewardsLike(p.rewards).rewardsToken() == address(0),
-            "Nst$PlaceholderPreFarmingInit/invalid-rewards-token"
+            "Nst01PreFarmingInit/invalid-rewards-token"
         );
         require(
             StakingRewardsLike(p.rewards).lastUpdateTime() == 0,
-            "Nst$PlaceholderPreFarmingInit/rewards-last-update-time-invalid"
+            "Nst01PreFarmingInit/rewards-last-update-time-invalid"
         );
         require(
             StakingRewardsLike(p.rewards).owner() == chainlog.getAddress("MCD_PAUSE_PROXY"),
-            "Nst$PlaceholderPreFarmingInit/invalid-owner"
+            "Nst01PreFarmingInit/invalid-owner"
         );
 
         chainlog.setAddress(p.rewardsKey, p.rewards);

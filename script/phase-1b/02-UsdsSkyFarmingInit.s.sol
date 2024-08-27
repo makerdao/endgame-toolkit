@@ -21,17 +21,17 @@ import {ScriptTools} from "dss-test/ScriptTools.sol";
 import {Reader} from "../helpers/Reader.sol";
 import {VestInit, VestInitParams} from "../dependencies/VestInit.sol";
 import {
-    UsdsNgtFarmingInit,
-    UsdsNgtFarmingInitParams,
-    UsdsNgtFarmingInitResult
-} from "../dependencies/phase-1b/UsdsNgtFarmingInit.sol";
+    UsdsSkyFarmingInit,
+    UsdsSkyFarmingInitParams,
+    UsdsSkyFarmingInitResult
+} from "../dependencies/phase-1b/UsdsSkyFarmingInit.sol";
 
-contract Phase1b_UsdsNgtFarmingInitScript is Script {
+contract Phase1b_UsdsSkyFarmingInitScript is Script {
     using ScriptTools for string;
 
     ChainlogLike internal constant chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
 
-    string internal constant NAME = "phase-1b/usds-ngt-farming-init";
+    string internal constant NAME = "phase-1b/usds-sky-farming-init";
 
     function run() external {
         Reader config = new Reader(ScriptTools.loadConfig());
@@ -41,19 +41,19 @@ contract Phase1b_UsdsNgtFarmingInitScript is Script {
         uint256 vestBgn = config.envOrReadUint("FOUNDRY_VEST_BGN", ".vestBgn");
         uint256 vestTau = config.envOrReadUint("FOUNDRY_VEST_TAU", ".vestTau");
 
-        address ngt = deps.envOrReadAddress("FOUNDRY_NGT", ".ngt");
+        address sky = deps.envOrReadAddress("FOUNDRY_SKY", ".sky");
         address usds = deps.envOrReadAddress("FOUNDRY_USDS", ".usds");
         address dist = deps.envOrReadAddress("FOUNDRY_DIST", ".dist");
         address rewards = deps.envOrReadAddress("FOUNDRY_FARM", ".rewards");
         address vest = deps.envOrReadAddress("FOUNDRY_VEST", ".vest");
 
-        UsdsNgtFarmingInitParams memory farmingCfg = UsdsNgtFarmingInitParams({
-            ngt: ngt,
+        UsdsSkyFarmingInitParams memory farmingCfg = UsdsSkyFarmingInitParams({
+            sky: sky,
             usds: usds,
             dist: dist,
-            distKey: "REWARDS_DISTRIBUTION_USDS_NGT",
+            distKey: "REWARDS_DISTRIBUTION_USDS_SKY",
             rewards: rewards,
-            rewardsKey: "FARM_USDS_NGT",
+            rewardsKey: "FARM_USDS_SKY",
             vest: vest,
             vestTot: vestTot,
             vestBgn: vestBgn,
@@ -66,7 +66,7 @@ contract Phase1b_UsdsNgtFarmingInitScript is Script {
 
         vm.startBroadcast();
 
-        UsdsNgtFarmingInitSpell spell = new UsdsNgtFarmingInitSpell();
+        UsdsSkyFarmingInitSpell spell = new UsdsSkyFarmingInitSpell();
         bytes memory out = ProxyLike(pauseProxy).exec(
             address(spell),
             abi.encodeCall(spell.cast, (farmingCfg, vestInitCfg))
@@ -74,9 +74,9 @@ contract Phase1b_UsdsNgtFarmingInitScript is Script {
 
         vm.stopBroadcast();
 
-        UsdsNgtFarmingInitResult memory res = abi.decode(out, (UsdsNgtFarmingInitResult));
+        UsdsSkyFarmingInitResult memory res = abi.decode(out, (UsdsSkyFarmingInitResult));
 
-        ScriptTools.exportContract(NAME, "ngt", ngt);
+        ScriptTools.exportContract(NAME, "sky", sky);
         ScriptTools.exportContract(NAME, "dist", dist);
         ScriptTools.exportContract(NAME, "rewards", rewards);
         ScriptTools.exportContract(NAME, "vest", vest);
@@ -84,13 +84,13 @@ contract Phase1b_UsdsNgtFarmingInitScript is Script {
     }
 }
 
-contract UsdsNgtFarmingInitSpell {
+contract UsdsSkyFarmingInitSpell {
     function cast(
-        UsdsNgtFarmingInitParams memory farmingCfg,
+        UsdsSkyFarmingInitParams memory farmingCfg,
         VestInitParams calldata vestInitCfg
-    ) public returns (UsdsNgtFarmingInitResult memory) {
+    ) public returns (UsdsSkyFarmingInitResult memory) {
         VestInit.init(farmingCfg.vest, vestInitCfg);
-        return UsdsNgtFarmingInit.init(farmingCfg);
+        return UsdsSkyFarmingInit.init(farmingCfg);
     }
 }
 

@@ -18,14 +18,14 @@ pragma solidity ^0.8.16;
 import {Script} from "forge-std/Script.sol";
 import {Reader} from "../helpers/Reader.sol";
 
-contract Phase1b_NstNgtFarmingCheckScript is Script {
+contract Phase1b_UsdsNgtFarmingCheckScript is Script {
     function run() external returns (bool) {
         Reader deps = new Reader("");
         deps.loadDependenciesOrConfig();
 
         address admin = deps.envOrReadAddress("FOUNDRY_ADMIN", ".admin");
         address ngt = deps.envOrReadAddress("FOUNDRY_NGT", ".ngt");
-        address nst = deps.envOrReadAddress("FOUNDRY_NST", ".nst");
+        address usds = deps.envOrReadAddress("FOUNDRY_USDS", ".usds");
         address dist = deps.readAddress(".dist");
         address rewards = deps.readAddress(".rewards");
         address vest = deps.readAddress(".vest");
@@ -41,7 +41,7 @@ contract Phase1b_NstNgtFarmingCheckScript is Script {
 
         require(StakingRewardsLike(rewards).owner() == admin, "StakingRewards/admin-not-owner");
         require(StakingRewardsLike(rewards).rewardsToken() == ngt, "StakingRewards/invalid-rewards-token");
-        require(StakingRewardsLike(rewards).stakingToken() == nst, "StakingRewards/invalid-rewards-token");
+        require(StakingRewardsLike(rewards).stakingToken() == usds, "StakingRewards/invalid-rewards-token");
         require(
             StakingRewardsLike(rewards).rewardsDistribution() == dist,
             "StakingRewards/invalid-rewards-distribution"

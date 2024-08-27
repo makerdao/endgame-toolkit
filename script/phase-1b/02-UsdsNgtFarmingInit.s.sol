@@ -21,17 +21,17 @@ import {ScriptTools} from "dss-test/ScriptTools.sol";
 import {Reader} from "../helpers/Reader.sol";
 import {VestInit, VestInitParams} from "../dependencies/VestInit.sol";
 import {
-    NstNgtFarmingInit,
-    NstNgtFarmingInitParams,
-    NstNgtFarmingInitResult
-} from "../dependencies/phase-1b/NstNgtFarmingInit.sol";
+    UsdsNgtFarmingInit,
+    UsdsNgtFarmingInitParams,
+    UsdsNgtFarmingInitResult
+} from "../dependencies/phase-1b/UsdsNgtFarmingInit.sol";
 
-contract Phase1b_NstNgtFarmingInitScript is Script {
+contract Phase1b_UsdsNgtFarmingInitScript is Script {
     using ScriptTools for string;
 
     ChainlogLike internal constant chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
 
-    string internal constant NAME = "phase-1b/nst-ngt-farming-init";
+    string internal constant NAME = "phase-1b/usds-ngt-farming-init";
 
     function run() external {
         Reader config = new Reader(ScriptTools.loadConfig());
@@ -42,18 +42,18 @@ contract Phase1b_NstNgtFarmingInitScript is Script {
         uint256 vestTau = config.envOrReadUint("FOUNDRY_VEST_TAU", ".vestTau");
 
         address ngt = deps.envOrReadAddress("FOUNDRY_NGT", ".ngt");
-        address nst = deps.envOrReadAddress("FOUNDRY_NST", ".nst");
+        address usds = deps.envOrReadAddress("FOUNDRY_USDS", ".usds");
         address dist = deps.envOrReadAddress("FOUNDRY_DIST", ".dist");
         address rewards = deps.envOrReadAddress("FOUNDRY_FARM", ".rewards");
         address vest = deps.envOrReadAddress("FOUNDRY_VEST", ".vest");
 
-        NstNgtFarmingInitParams memory farmingCfg = NstNgtFarmingInitParams({
+        UsdsNgtFarmingInitParams memory farmingCfg = UsdsNgtFarmingInitParams({
             ngt: ngt,
-            nst: nst,
+            usds: usds,
             dist: dist,
-            distKey: "REWARDS_DISTRIBUTION_NST_NGT",
+            distKey: "REWARDS_DISTRIBUTION_USDS_NGT",
             rewards: rewards,
-            rewardsKey: "FARM_NST_NGT",
+            rewardsKey: "FARM_USDS_NGT",
             vest: vest,
             vestTot: vestTot,
             vestBgn: vestBgn,
@@ -66,7 +66,7 @@ contract Phase1b_NstNgtFarmingInitScript is Script {
 
         vm.startBroadcast();
 
-        NstNgtFarmingInitSpell spell = new NstNgtFarmingInitSpell();
+        UsdsNgtFarmingInitSpell spell = new UsdsNgtFarmingInitSpell();
         bytes memory out = ProxyLike(pauseProxy).exec(
             address(spell),
             abi.encodeCall(spell.cast, (farmingCfg, vestInitCfg))
@@ -74,7 +74,7 @@ contract Phase1b_NstNgtFarmingInitScript is Script {
 
         vm.stopBroadcast();
 
-        NstNgtFarmingInitResult memory res = abi.decode(out, (NstNgtFarmingInitResult));
+        UsdsNgtFarmingInitResult memory res = abi.decode(out, (UsdsNgtFarmingInitResult));
 
         ScriptTools.exportContract(NAME, "ngt", ngt);
         ScriptTools.exportContract(NAME, "dist", dist);
@@ -84,13 +84,13 @@ contract Phase1b_NstNgtFarmingInitScript is Script {
     }
 }
 
-contract NstNgtFarmingInitSpell {
+contract UsdsNgtFarmingInitSpell {
     function cast(
-        NstNgtFarmingInitParams memory farmingCfg,
+        UsdsNgtFarmingInitParams memory farmingCfg,
         VestInitParams calldata vestInitCfg
-    ) public returns (NstNgtFarmingInitResult memory) {
+    ) public returns (UsdsNgtFarmingInitResult memory) {
         VestInit.init(farmingCfg.vest, vestInitCfg);
-        return NstNgtFarmingInit.init(farmingCfg);
+        return UsdsNgtFarmingInit.init(farmingCfg);
     }
 }
 

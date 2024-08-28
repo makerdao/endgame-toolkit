@@ -19,47 +19,29 @@ import {Script} from "forge-std/Script.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 
 import {Reader} from "../helpers/Reader.sol";
-import {Nst01PreFarmingInit, Nst01PreFarmingInitParams} from "../dependencies/phase-1b/Nst01PreFarmingInit.sol";
+import {StakingRewardsDeploy, StakingRewardsDeployParams} from "../dependencies/StakingRewardsDeploy.sol";
 
-interface ProxyLike {
-    function exec(address usr, bytes memory fax) external returns (bytes memory out);
-}
-
-contract Nst01PreFarmingInitSpell {
-    function cast(Nst01PreFarmingInitParams memory farmingCfg) public {
-        Nst01PreFarmingInit.init(farmingCfg);
-    }
-}
-
-contract Phase1b_Nst01PreFarmingInitScript is Script {
-    using ScriptTools for string;
+contract Phase1b_Usds01PreFarmingDeployScript is Script {
+    string internal constant NAME = "phase-1b/usds-01-pre-farming-deploy";
 
     ChainlogLike internal constant chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
 
-    string internal constant NAME = "phase-1b/nst-01-pre-farming-init";
-
     function run() external {
-        Reader deps = new Reader(ScriptTools.loadDependencies());
+        Reader reader = new Reader(ScriptTools.loadConfig());
 
-        address nst = deps.envOrReadAddress("FOUNDRY_NST", ".nst");
-        address rewards = deps.envOrReadAddress("FOUNDRY_REWARDS", ".rewards");
-
-        Nst01PreFarmingInitParams memory farmingCfg = Nst01PreFarmingInitParams({
-            nst: nst,
-            rewards: rewards,
-            rewardsKey: "FARM_NST_01"
-        });
-
-        address pauseProxy = chainlog.getAddress("MCD_PAUSE_PROXY");
+        address admin = chainlog.getAddress("MCD_PAUSE_PROXY");
+        address usds = reader.envOrReadAddress("FOUNDRY_USDS", ".usds");
 
         vm.startBroadcast();
 
-        Nst01PreFarmingInitSpell spell = new Nst01PreFarmingInitSpell();
-        ProxyLike(pauseProxy).exec(address(spell), abi.encodeCall(spell.cast, (farmingCfg)));
+        address rewards = StakingRewardsDeploy.deploy(
+            StakingRewardsDeployParams({owner: admin, stakingToken: usds, rewardsToken: address(0)})
+        );
 
         vm.stopBroadcast();
 
-        ScriptTools.exportContract(NAME, "nst", nst);
+        ScriptTools.exportContract(NAME, "admin", admin);
+        ScriptTools.exportContract(NAME, "usds", usds);
         ScriptTools.exportContract(NAME, "rewards", rewards);
     }
 }

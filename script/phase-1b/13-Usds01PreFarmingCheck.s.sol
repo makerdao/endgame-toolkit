@@ -16,36 +16,44 @@
 pragma solidity ^0.8.16;
 
 import {Script} from "forge-std/Script.sol";
-import {ScriptTools} from "dss-test/ScriptTools.sol";
-
 import {Reader} from "../helpers/Reader.sol";
-import {StakingRewardsDeploy, StakingRewardsDeployParams} from "../dependencies/StakingRewardsDeploy.sol";
 
-contract Phase1b_Nst01PreFarmingDeployScript is Script {
-    string internal constant NAME = "phase-1b/nst-01-pre-farming-deploy";
-
+contract Phase1b_Usds01PreFarmingCheckScript is Script {
     ChainlogLike internal constant chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
 
-    function run() external {
-        Reader reader = new Reader(ScriptTools.loadConfig());
+    function run() external returns (bool) {
+        Reader deps = new Reader("");
+        deps.loadDependenciesOrConfig();
 
         address admin = chainlog.getAddress("MCD_PAUSE_PROXY");
-        address nst = reader.envOrReadAddress("FOUNDRY_NST", ".nst");
+        address usds = deps.envOrReadAddress("FOUNDRY_USDS", ".usds");
+        address rewards = deps.readAddress(".rewards");
 
-        vm.startBroadcast();
-
-        address rewards = StakingRewardsDeploy.deploy(
-            StakingRewardsDeployParams({owner: admin, stakingToken: nst, rewardsToken: address(0)})
+        require(StakingRewardsLike(rewards).owner() == admin, "PlaceholderPreFarmingCheck/admin-not-owner");
+        require(
+            StakingRewardsLike(rewards).rewardsToken() == address(0),
+            "PlaceholderPreFarmingCheck/invalid-rewards-token"
+        );
+        require(StakingRewardsLike(rewards).stakingToken() == usds, "PlaceholderPreFarmingCheck/invalid-rewards-token");
+        require(
+            StakingRewardsLike(rewards).rewardsDistribution() == address(0),
+            "PlaceholderPreFarmingCheck/invalid-rewards-distribution"
         );
 
-        vm.stopBroadcast();
-
-        ScriptTools.exportContract(NAME, "admin", admin);
-        ScriptTools.exportContract(NAME, "nst", nst);
-        ScriptTools.exportContract(NAME, "rewards", rewards);
+        return true;
     }
 }
 
 interface ChainlogLike {
     function getAddress(bytes32 _key) external view returns (address addr);
+}
+
+interface StakingRewardsLike {
+    function owner() external view returns (address);
+
+    function stakingToken() external view returns (address);
+
+    function rewardsToken() external view returns (address);
+
+    function rewardsDistribution() external view returns (address);
 }

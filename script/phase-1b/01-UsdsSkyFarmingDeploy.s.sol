@@ -25,18 +25,18 @@ import {
     VestedRewardsDistributionDeployParams
 } from "../dependencies/VestedRewardsDistributionDeploy.sol";
 
-contract Phase1b_NstNgtFarmingDeployScript is Script {
+contract Phase1b_UsdsSkyFarmingDeployScript is Script {
     ChainlogLike internal constant chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
 
-    string internal constant NAME = "phase-1b/nst-ngt-farming-deploy";
+    string internal constant NAME = "phase-1b/usds-sky-farming-deploy";
 
     function run() external {
         Reader reader = new Reader(ScriptTools.loadConfig());
 
         address admin = chainlog.getAddress("MCD_PAUSE_PROXY");
 
-        address ngt = reader.envOrReadAddress("FOUNDRY_NGT", ".ngt");
-        address nst = reader.envOrReadAddress("FOUNDRY_NST", ".nst");
+        address sky = reader.envOrReadAddress("FOUNDRY_SKY", ".sky");
+        address usds = reader.envOrReadAddress("FOUNDRY_USDS", ".usds");
         address vest = reader.envOrReadAddress("FOUNDRY_VEST", ".vest");
         address dist = reader.readAddressOptional(".dist");
         address rewards = reader.readAddressOptional(".rewards");
@@ -45,7 +45,7 @@ contract Phase1b_NstNgtFarmingDeployScript is Script {
 
         if (rewards == address(0)) {
             rewards = StakingRewardsDeploy.deploy(
-                StakingRewardsDeployParams({owner: admin, stakingToken: nst, rewardsToken: ngt})
+                StakingRewardsDeployParams({owner: admin, stakingToken: usds, rewardsToken: sky})
             );
         }
 
@@ -63,8 +63,8 @@ contract Phase1b_NstNgtFarmingDeployScript is Script {
         vm.stopBroadcast();
 
         ScriptTools.exportContract(NAME, "admin", admin);
-        ScriptTools.exportContract(NAME, "ngt", ngt);
-        ScriptTools.exportContract(NAME, "nst", nst);
+        ScriptTools.exportContract(NAME, "sky", sky);
+        ScriptTools.exportContract(NAME, "usds", usds);
         ScriptTools.exportContract(NAME, "dist", dist);
         ScriptTools.exportContract(NAME, "rewards", rewards);
         ScriptTools.exportContract(NAME, "vest", vest);

@@ -1,7 +1,7 @@
 {
-  "ngt": "address: the address of NGT",
-  "nst": "address: the address of NST",
-  "vest": "address: the address of a DssVestMintable contract for NGT",
+  "sky": "address: the address of SKY",
+  "usds": "address: the address of USDS",
+  "vest": "address: the address of a DssVestMintable contract for SKY",
   "rewards": "[OPTIONAL] address: the address of the StakingRewards contract",
   "dist": "[OPTIONAL ]address: the address of the VestedRewardsDistrubution contract"
 }

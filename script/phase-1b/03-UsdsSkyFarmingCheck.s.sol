@@ -18,14 +18,14 @@ pragma solidity ^0.8.16;
 import {Script} from "forge-std/Script.sol";
 import {Reader} from "../helpers/Reader.sol";
 
-contract Phase1b_NstNgtFarmingCheckScript is Script {
+contract Phase1b_UsdsSkyFarmingCheckScript is Script {
     function run() external returns (bool) {
         Reader deps = new Reader("");
         deps.loadDependenciesOrConfig();
 
         address admin = deps.envOrReadAddress("FOUNDRY_ADMIN", ".admin");
-        address ngt = deps.envOrReadAddress("FOUNDRY_NGT", ".ngt");
-        address nst = deps.envOrReadAddress("FOUNDRY_NST", ".nst");
+        address sky = deps.envOrReadAddress("FOUNDRY_SKY", ".sky");
+        address usds = deps.envOrReadAddress("FOUNDRY_USDS", ".usds");
         address dist = deps.readAddress(".dist");
         address rewards = deps.readAddress(".rewards");
         address vest = deps.readAddress(".vest");
@@ -33,23 +33,23 @@ contract Phase1b_NstNgtFarmingCheckScript is Script {
 
         require(VestedRewardsDistributionLike(dist).dssVest() == vest, "VestedRewardsDistribution/invalid-vest");
         require(VestedRewardsDistributionLike(dist).vestId() == vestId, "VestedRewardsDistribution/invalid-vest-id");
-        require(VestedRewardsDistributionLike(dist).gem() == ngt, "VestedRewardsDistribution/invalid-gem");
+        require(VestedRewardsDistributionLike(dist).gem() == sky, "VestedRewardsDistribution/invalid-gem");
         require(
             VestedRewardsDistributionLike(dist).stakingRewards() == rewards,
             "VestedRewardsDistribution/invalid-staking-rewards"
         );
 
         require(StakingRewardsLike(rewards).owner() == admin, "StakingRewards/admin-not-owner");
-        require(StakingRewardsLike(rewards).rewardsToken() == ngt, "StakingRewards/invalid-rewards-token");
-        require(StakingRewardsLike(rewards).stakingToken() == nst, "StakingRewards/invalid-rewards-token");
+        require(StakingRewardsLike(rewards).rewardsToken() == sky, "StakingRewards/invalid-rewards-token");
+        require(StakingRewardsLike(rewards).stakingToken() == usds, "StakingRewards/invalid-rewards-token");
         require(
             StakingRewardsLike(rewards).rewardsDistribution() == dist,
             "StakingRewards/invalid-rewards-distribution"
         );
 
-        require(WardsLike(ngt).wards(vest) == 1, "Ngt/dss-vest-not-ward");
+        require(WardsLike(sky).wards(vest) == 1, "Sky/dss-vest-not-ward");
 
-        require(DssVestWithGemLike(vest).gem() == ngt, "DssVest/invalid-gem");
+        require(DssVestWithGemLike(vest).gem() == sky, "DssVest/invalid-gem");
         require(DssVestWithGemLike(vest).valid(vestId), "DssVest/invalid-vest-id");
         require(DssVestWithGemLike(vest).res(vestId) == 1, "DssVest/invalid-vest-res");
         require(DssVestWithGemLike(vest).usr(vestId) == dist, "DssVest/wrong-dist");

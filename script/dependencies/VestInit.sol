@@ -15,10 +15,6 @@
 
 pragma solidity ^0.8.16;
 
-struct VestInitParams {
-    uint256 cap;
-}
-
 struct VestCreateParams {
     address usr;
     uint256 tot;
@@ -27,11 +23,8 @@ struct VestCreateParams {
     uint256 eta;
 }
 
+/// @dev Handles vesting stream creation. Assumes `DssVest` parameters are initialized somewhere else.
 library VestInit {
-    function init(address vest, VestInitParams memory p) internal {
-        DssVestLike(vest).file("cap", p.cap);
-    }
-
     function create(address vest, VestCreateParams memory p) internal returns (uint256 vestId) {
         vestId = DssVestLike(vest).create(
             p.usr,
@@ -47,8 +40,6 @@ library VestInit {
 }
 
 interface DssVestLike {
-    function file(bytes32 _what, uint256 _data) external;
-
     function create(
         address _usr,
         uint256 _tot,

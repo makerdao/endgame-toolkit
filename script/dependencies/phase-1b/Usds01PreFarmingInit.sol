@@ -33,9 +33,10 @@ library Usds01PreFarmingInit {
             StakingRewardsLike(p.rewards).rewardsToken() == address(0),
             "Usds01PreFarmingInit/invalid-rewards-token"
         );
+        require(StakingRewardsLike(p.rewards).rewardRate() == 0, "Usds01PreFarmingInit/reward-rate-not-zero");
         require(
-            StakingRewardsLike(p.rewards).lastUpdateTime() == 0,
-            "Usds01PreFarmingInit/rewards-last-update-time-invalid"
+            StakingRewardsLike(p.rewards).rewardsDistribution() == address(0),
+            "Usds01PreFarmingInit/rewards-distribution-already-set"
         );
         require(
             StakingRewardsLike(p.rewards).owner() == chainlog.getAddress("MCD_PAUSE_PROXY"),
@@ -47,9 +48,11 @@ library Usds01PreFarmingInit {
 }
 
 interface StakingRewardsLike {
-    function lastUpdateTime() external view returns (uint256);
-
     function owner() external view returns (address);
+
+    function rewardRate() external view returns (uint256);
+
+    function rewardsDistribution() external view returns (address);
 
     function rewardsToken() external view returns (address);
 

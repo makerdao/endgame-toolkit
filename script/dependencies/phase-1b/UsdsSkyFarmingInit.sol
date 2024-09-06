@@ -40,13 +40,16 @@ library UsdsSkyFarmingInit {
     ChainlogLike internal constant chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
 
     function init(UsdsSkyFarmingInitParams memory p) internal returns (UsdsSkyFarmingInitResult memory r) {
-        address stakingToken = StakingRewardsLike(p.rewards).stakingToken();
-        address rewardsToken = StakingRewardsLike(p.rewards).rewardsToken();
-
         require(DssVestWithGemLike(p.vest).gem() == p.sky, "UsdsSkyFarmingInit/vest-gem-mismatch");
 
-        require(stakingToken == p.usds, "UsdsSkyFarmingInit/rewards-staking-token-mismatch");
-        require(rewardsToken == p.sky, "UsdsSkyFarmingInit/rewards-rewards-token-mismatch");
+        require(
+            StakingRewardsLike(p.rewards).stakingToken() == p.usds,
+            "UsdsSkyFarmingInit/rewards-staking-token-mismatch"
+        );
+        require(
+            StakingRewardsLike(p.rewards).rewardsToken() == p.sky,
+            "UsdsSkyFarmingInit/rewards-rewards-token-mismatch"
+        );
         require(StakingRewardsLike(p.rewards).rewardRate() == 0, "UsdsSkyFarmingInit/reward-rate-not-zero");
         require(
             StakingRewardsLike(p.rewards).rewardsDistribution() == address(0),

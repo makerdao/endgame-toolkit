@@ -52,6 +52,10 @@ library UsdsSkyFarmingInit {
             StakingRewardsLike(p.rewards).rewardsDistribution() == address(0),
             "UsdsSkyFarmingInit/rewards-distribution-already-set"
         );
+        require(
+            StakingRewardsLike(p.rewards).owner() == chainlog.getAddress("MCD_PAUSE_PROXY"),
+            "UsdsSkyFarmingInit/invalid-owner"
+        );
 
         require(VestedRewardsDistributionLike(p.dist).gem() == p.sky, "UsdsSkyFarmingInit/dist-gem-mismatch");
         require(VestedRewardsDistributionLike(p.dist).dssVest() == p.vest, "UsdsSkyFarmingInit/dist-dss-vest-mismatch");
@@ -111,5 +115,7 @@ interface VestedRewardsDistributionLike {
 }
 
 interface ChainlogLike {
+    function getAddress(bytes32 key) external view returns (address);
+
     function setAddress(bytes32 key, address addr) external;
 }

@@ -35,3 +35,6 @@ fs_permissions = [
     { access = "read", path = "./script/input/" },
     { access = "read-write", path = "./script/output/" }
 ]
+
+[etherscan]
+unknown_chain = { key = "${TENDERLY_ACCESS_KEY}", chain = 314311, url = "${ETH_RPC_URL}/verify/etherscan" }

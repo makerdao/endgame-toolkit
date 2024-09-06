@@ -16,12 +16,13 @@
 pragma solidity ^0.8.16;
 
 import {Script} from "forge-std/Script.sol";
+import {ScriptTools} from "dss-test/ScriptTools.sol";
 import {Reader} from "../helpers/Reader.sol";
 
 contract Phase1b_UsdsSkyFarmingCheckScript is Script {
     function run() external returns (bool) {
-        Reader deps = new Reader("");
-        deps.loadDependenciesOrConfig();
+        Reader config = new Reader(ScriptTools.loadConfig());
+        Reader deps = new Reader(ScriptTools.loadDependencies());
 
         address admin = deps.envOrReadAddress("FOUNDRY_ADMIN", ".admin");
         address sky = deps.envOrReadAddress("FOUNDRY_SKY", ".sky");
@@ -30,6 +31,9 @@ contract Phase1b_UsdsSkyFarmingCheckScript is Script {
         address rewards = deps.readAddress(".rewards");
         address vest = deps.readAddress(".vest");
         uint256 vestId = deps.readUint(".vestId");
+        uint256 vestBgn = config.readUint(".vestBgn");
+        uint256 vestTau = config.readUint(".vestTau");
+        uint256 vestTot = config.readUint(".vestTot");
 
         require(VestedRewardsDistributionLike(dist).dssVest() == vest, "VestedRewardsDistribution/invalid-vest");
         require(VestedRewardsDistributionLike(dist).vestId() == vestId, "VestedRewardsDistribution/invalid-vest-id");
@@ -41,7 +45,7 @@ contract Phase1b_UsdsSkyFarmingCheckScript is Script {
 
         require(StakingRewardsLike(rewards).owner() == admin, "StakingRewards/admin-not-owner");
         require(StakingRewardsLike(rewards).rewardsToken() == sky, "StakingRewards/invalid-rewards-token");
-        require(StakingRewardsLike(rewards).stakingToken() == usds, "StakingRewards/invalid-rewards-token");
+        require(StakingRewardsLike(rewards).stakingToken() == usds, "StakingRewards/invalid-staking-token");
         require(
             StakingRewardsLike(rewards).rewardsDistribution() == dist,
             "StakingRewards/invalid-rewards-distribution"
@@ -54,6 +58,9 @@ contract Phase1b_UsdsSkyFarmingCheckScript is Script {
         require(DssVestWithGemLike(vest).res(vestId) == 1, "DssVest/invalid-vest-res");
         require(DssVestWithGemLike(vest).usr(vestId) == dist, "DssVest/wrong-dist");
         require(DssVestWithGemLike(vest).mgr(vestId) == address(0), "DssVest/mgr-should-not-be-set");
+        require(DssVestWithGemLike(vest).bgn(vestId) == vestBgn, "DssVest/invalid-bgn");
+        require(DssVestWithGemLike(vest).fin(vestId) == vestBgn + vestTau, "DssVest/invalid-tau");
+        require(DssVestWithGemLike(vest).tot(vestId) == vestTot, "DssVest/invalid-tot");
 
         return true;
     }
@@ -84,11 +91,17 @@ interface StakingRewardsLike {
 }
 
 interface DssVestWithGemLike {
+    function bgn(uint256 _id) external view returns (uint256);
+
+    function fin(uint256 _id) external view returns (uint256);
+
     function gem() external view returns (address);
 
     function mgr(uint256 _id) external view returns (address);
 
     function res(uint256 _id) external view returns (uint256);
+
+    function tot(uint256 _id) external view returns (uint256);
 
     function usr(uint256 _id) external view returns (address);
 

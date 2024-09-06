@@ -19,7 +19,6 @@ import {Script} from "forge-std/Script.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 
 import {Reader} from "../helpers/Reader.sol";
-import {VestInit, VestInitParams} from "../dependencies/VestInit.sol";
 import {
     UsdsSkyFarmingInit,
     UsdsSkyFarmingInitParams,
@@ -60,17 +59,12 @@ contract Phase1b_UsdsSkyFarmingInitScript is Script {
             vestTau: vestTau
         });
 
-        VestInitParams memory vestInitCfg = VestInitParams({cap: type(uint256).max});
-
         address pauseProxy = chainlog.getAddress("MCD_PAUSE_PROXY");
 
         vm.startBroadcast();
 
         UsdsSkyFarmingInitSpell spell = new UsdsSkyFarmingInitSpell();
-        bytes memory out = ProxyLike(pauseProxy).exec(
-            address(spell),
-            abi.encodeCall(spell.cast, (farmingCfg, vestInitCfg))
-        );
+        bytes memory out = ProxyLike(pauseProxy).exec(address(spell), abi.encodeCall(spell.cast, (farmingCfg)));
 
         vm.stopBroadcast();
 
@@ -85,11 +79,10 @@ contract Phase1b_UsdsSkyFarmingInitScript is Script {
 }
 
 contract UsdsSkyFarmingInitSpell {
-    function cast(
-        UsdsSkyFarmingInitParams memory farmingCfg,
-        VestInitParams calldata vestInitCfg
-    ) public returns (UsdsSkyFarmingInitResult memory) {
-        VestInit.init(farmingCfg.vest, vestInitCfg);
+    uint256 internal constant CAP = type(uint256).max;
+
+    function cast(UsdsSkyFarmingInitParams memory farmingCfg) public returns (UsdsSkyFarmingInitResult memory) {
+        DssVestLike(farmingCfg.vest).file("cap", CAP);
         return UsdsSkyFarmingInit.init(farmingCfg);
     }
 }
@@ -100,4 +93,8 @@ interface ProxyLike {
 
 interface ChainlogLike {
     function getAddress(bytes32 _key) external view returns (address addr);
+}
+
+interface DssVestLike {
+    function file(bytes32 _what, uint256 _data) external;
 }

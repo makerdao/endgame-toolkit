@@ -40,18 +40,24 @@ library UsdsSkyFarmingInit {
     ChainlogLike internal constant chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
 
     function init(UsdsSkyFarmingInitParams memory p) internal returns (UsdsSkyFarmingInitResult memory r) {
-        address stakingToken = StakingRewardsLike(p.rewards).stakingToken();
-        address rewardsToken = StakingRewardsLike(p.rewards).rewardsToken();
-
-        require(stakingToken != rewardsToken, "UsdsSkyFarmingInit/rewards-token-same-as-staking-token");
-
         require(DssVestWithGemLike(p.vest).gem() == p.sky, "UsdsSkyFarmingInit/vest-gem-mismatch");
 
-        require(stakingToken == p.usds, "UsdsSkyFarmingInit/rewards-staking-token-mismatch");
-        require(rewardsToken == p.sky, "UsdsSkyFarmingInit/rewards-rewards-token-mismatch");
         require(
-            StakingRewardsLike(p.rewards).lastUpdateTime() == 0,
-            "UsdsSkyFarmingInit/rewards-last-update-time-invalid"
+            StakingRewardsLike(p.rewards).stakingToken() == p.usds,
+            "UsdsSkyFarmingInit/rewards-staking-token-mismatch"
+        );
+        require(
+            StakingRewardsLike(p.rewards).rewardsToken() == p.sky,
+            "UsdsSkyFarmingInit/rewards-rewards-token-mismatch"
+        );
+        require(StakingRewardsLike(p.rewards).rewardRate() == 0, "UsdsSkyFarmingInit/reward-rate-not-zero");
+        require(
+            StakingRewardsLike(p.rewards).rewardsDistribution() == address(0),
+            "UsdsSkyFarmingInit/rewards-distribution-already-set"
+        );
+        require(
+            StakingRewardsLike(p.rewards).owner() == chainlog.getAddress("MCD_PAUSE_PROXY"),
+            "UsdsSkyFarmingInit/invalid-owner"
         );
 
         require(VestedRewardsDistributionLike(p.dist).gem() == p.sky, "UsdsSkyFarmingInit/dist-gem-mismatch");
@@ -64,7 +70,6 @@ library UsdsSkyFarmingInit {
         // `vest` is expected to be an instance of `DssVestMintable`.
         // Check if minting rights on `sky` were granted to `vest`.
         require(WardsLike(p.sky).wards(p.vest) == 1, "UsdsSkyFarmingInit/missing-sky-rely-vest");
-
         // Set `dist` with  `rewardsDistribution` role in `rewards`.
         StakingRewardsInit.init(p.rewards, StakingRewardsInitParams({dist: p.dist}));
 
@@ -93,7 +98,11 @@ interface DssVestWithGemLike {
 }
 
 interface StakingRewardsLike {
-    function lastUpdateTime() external view returns (uint256);
+    function owner() external view returns (address);
+
+    function rewardRate() external view returns (uint256);
+
+    function rewardsDistribution() external view returns (address);
 
     function rewardsToken() external view returns (address);
 
@@ -109,5 +118,7 @@ interface VestedRewardsDistributionLike {
 }
 
 interface ChainlogLike {
+    function getAddress(bytes32 key) external view returns (address);
+
     function setAddress(bytes32 key, address addr) external;
 }

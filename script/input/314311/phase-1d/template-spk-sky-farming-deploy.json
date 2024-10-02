@@ -1,0 +1,7 @@
+{
+  "spk": "address: the address of SPK",
+  "sky": "address: the address of SKY",
+  "vest": "address: the address of a DssVestMintable contract for SKY",
+  "rewards": "[OPTIONAL] address: the address of the StakingRewards contract",
+  "dist": "[OPTIONAL] address: the address of the VestedRewardsDistrubution contract"
+}

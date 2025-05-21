@@ -452,7 +452,8 @@ contract StakingRewardsTest is Test {
         rewards.withdraw(1 * WAD);
     }
 
-    function testFailtIfNothingToWithdraw() public {
+    function testRevertIfNothingToWithdraw() public {
+        vm.expectRevert();
         rewards.withdraw(1);
     }
 
